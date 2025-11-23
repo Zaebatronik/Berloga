@@ -258,49 +258,28 @@ export default function AddListingPage() {
       console.log('⏭️ Пропускаем локальное сохранение (большие фото)');
 
       // Отправляем на сервер (только данные, без локальных ID)
-      try {
-        console.log('🌐 Отправка на сервер:', {
-          url: import.meta.env.VITE_API_URL || 'http://localhost:3001',
-          data: {
-            ...listingData,
-            userId: listingData.userId,
-            userNickname: listingData.userNickname,
-            city: listingData.city || user?.city || 'Не указан',
-            country: listingData.country || user?.country || 'Не указана'
-          }
-        });
-        const response = await listingsAPI.create({
+      console.log('🌐 Отправка на сервер:', {
+        url: import.meta.env.VITE_API_URL || 'http://localhost:3001',
+        data: {
           ...listingData,
+          userId: listingData.userId,
+          userNickname: listingData.userNickname,
           city: listingData.city || user?.city || 'Не указан',
           country: listingData.country || user?.country || 'Не указана'
-        });
-        console.log('✅ Объявление сохранено на сервере:', response.data);
-        
-        // Вибрация успеха
-        if (window.Telegram?.WebApp?.HapticFeedback) {
-          window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
         }
-        
-      } catch (serverError: any) {
-        console.error('❌ Ошибка при сохранении на сервер:', {
-          message: serverError?.message,
-          response: serverError?.response?.data,
-          status: serverError?.response?.status,
-          data: serverError?.response?.data
-        });
-        
-        const errorMessage = serverError?.response?.data?.message || serverError?.message || 'Неизвестная ошибка';
-        const errorDetails = serverError?.response?.data?.details || '';
-        
-        console.warn('⚠️ Объявление сохранено только локально');
-        
-        // Вибрация ошибки
-        if (window.Telegram?.WebApp?.HapticFeedback) {
-          window.Telegram.WebApp.HapticFeedback.notificationOccurred('error');
-        }
-        
-        // Показываем пользователю подробную ошибку
-        alert(`⚠️ Ошибка публикации:\n\n${errorMessage}\n${errorDetails}\n\nОбъявление сохранено локально и будет синхронизировано позже.`);
+      });
+      
+      const response = await listingsAPI.create({
+        ...listingData,
+        city: listingData.city || user?.city || 'Не указан',
+        country: listingData.country || user?.country || 'Не указана'
+      });
+      
+      console.log('✅ Объявление сохранено на сервере:', response.data);
+      
+      // Вибрация успеха
+      if (window.Telegram?.WebApp?.HapticFeedback) {
+        window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
       }
 
       // Очищаем черновик после успешной публикации

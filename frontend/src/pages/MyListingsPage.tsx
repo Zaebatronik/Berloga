@@ -20,47 +20,59 @@ interface Listing {
 export default function MyListingsPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { listings: allListings, user } = useStore();
+  const { user } = useStore();
   const [filter, setFilter] = useState<'all' | 'active' | 'hidden' | 'sold'>('all');
   const [dualPrices, setDualPrices] = useState<Map<string, string>>(new Map());
-
-  // Фильтруем только объявления текущего пользователя
-  const myListings = allListings.filter(l => l.userId === user?.id);
-
   const [listings, setListings] = useState<Listing[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Преобразуем формат объявлений
-    const formatted = myListings.map(l => ({
-      id: l.id,
-      title: l.title,
-      price: l.price || 0,
-      photo: l.photos[0] || '',
-      category: l.category,
-      status: l.status === 'active' ? 'active' : 'hidden' as 'active' | 'hidden' | 'sold',
-      views: l.views,
-      favorites: 0,
-      createdAt: new Date(l.createdAt).toLocaleDateString('ru-RU')
-    }));
-    setListings(formatted);
-    
-    // Форматируем цены
-    const formatPrices = async () => {
-      const priceMap = new Map<string, string>();
-      const userCountry = user?.country || 'Украина';
+    const loadMyListings = async () => {
+      if (!user?.telegramId && !user?.id) return;
       
-      for (const listing of formatted) {
-        const formattedPrice = await currencyService.formatDualPrice(listing.price, userCountry);
-        priceMap.set(listing.id, formattedPrice);
+      setLoading(true);
+      try {
+        const { listingsAPI } = await import('../services/api');
+        const userId = user.telegramId || user.id;
+        console.log('📋 Загрузка объявлений пользователя:', userId);
+        
+        const response = await listingsAPI.getByUserId(userId);
+        const serverListings = response.data;
+        console.log('✅ Получено объявлений с сервера:', serverListings.length);
+        
+        // Преобразуем формат объявлений
+        const formatted = serverListings.map((l: any) => ({
+          id: l._id || l.id,
+          title: l.title,
+          price: l.price || 0,
+          photo: l.photos[0] || '',
+          category: l.category,
+          status: l.status === 'active' ? 'active' : 'hidden' as 'active' | 'hidden' | 'sold',
+          views: l.views,
+          favorites: 0,
+          createdAt: new Date(l.createdAt).toLocaleDateString('ru-RU')
+        }));
+        setListings(formatted);ed);
+        
+        // Форматируем цены
+        const priceMap = new Map<string, string>();
+        const userCountry = user?.country || 'Украина';
+        
+        for (const listing of formatted) {
+          const formattedPrice = await currencyService.formatDualPrice(listing.price, userCountry);
+          priceMap.set(listing.id, formattedPrice);
+        }
+        
+        setDualPrices(priceMap);
+      } catch (error) {
+        console.error('❌ Ошибка загрузки объявлений:', error);
+      } finally {
+        setLoading(false);
       }
-      
-      setDualPrices(priceMap);
     };
     
-    formatPrices();
-  }, [myListings, user?.country]);
-
-  const filteredListings = filter === 'all' 
+    loadMyListings();
+  }, [user?.telegramId, user?.id, user?.country]);  const filteredListings = filter === 'all' 
     ? listings 
     : listings.filter(l => l.status === filter);
 
