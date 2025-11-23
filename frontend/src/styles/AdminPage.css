@@ -590,24 +590,26 @@
 
 /* Refresh Button Styles */
 .refresh-btn {
-  padding: 14px 28px;
+  padding: 12px 20px;
   border: none;
-  border-radius: 16px;
-  font-size: 16px;
+  border-radius: 12px;
+  font-size: 14px;
   font-weight: 700;
   cursor: pointer;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
   background-size: 200% 200%;
   color: white;
-  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
   transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
   position: relative;
   overflow: hidden;
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   animation: gradientMove 3s ease infinite;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
+  width: auto;
+  max-width: 100%;
 }
 
 @keyframes gradientMove {
@@ -785,6 +787,18 @@
     padding: 10px 16px;
     font-size: 14px;
   }
+
+  .refresh-btn {
+    padding: 10px 16px;
+    font-size: 13px;
+    gap: 6px;
+    width: auto;
+  }
+
+  .export-btn {
+    padding: 10px 18px;
+    font-size: 14px;
+  }
 }
 
 @media (max-width: 360px) {
@@ -803,5 +817,21 @@
   .user-details {
     font-size: 13px;
     gap: 8px;
+  }
+
+  .refresh-btn {
+    padding: 8px 12px;
+    font-size: 12px;
+    gap: 4px;
+    margin-bottom: 12px;
+  }
+
+  .refresh-icon {
+    font-size: 16px;
+  }
+
+  .export-btn {
+    padding: 8px 14px;
+    font-size: 13px;
   }
 }

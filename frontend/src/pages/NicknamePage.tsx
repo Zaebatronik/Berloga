@@ -208,10 +208,14 @@ export default function NicknamePage() {
       <div className="fixed-bottom">
         <button
           className="btn btn-primary btn-large"
-          disabled={!nickname || loading}
+          disabled={!nickname || loading || checking || nickname.length < 3}
           onClick={handleFinish}
+          style={{
+            opacity: (!nickname || loading || checking || nickname.length < 3) ? 0.5 : 1,
+            cursor: (!nickname || loading || checking || nickname.length < 3) ? 'not-allowed' : 'pointer'
+          }}
         >
-          {loading ? t('common.loading') : t('registration.finish')}
+          {loading ? t('common.loading') : checking ? 'Проверка...' : t('registration.finish')}
         </button>
       </div>
     </div>
