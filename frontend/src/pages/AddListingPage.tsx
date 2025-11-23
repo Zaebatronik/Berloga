@@ -112,13 +112,11 @@ export default function AddListingPage() {
     }
     
     if (description) {
-      if (description.length < 10) {
-        newErrors.description = `✏️ Минимум 10 символов (еще ${10 - description.length})`;
+      if (description.length < 5) {
+        newErrors.description = `✏️ Минимум 5 символов (еще ${5 - description.length})`;
       } else if (description.length > 1000) {
         newErrors.description = '⚠️ Максимум 1000 символов';
       }
-    } else if (!description && (title || price || photos.length > 0)) {
-      newErrors.description = '❌ Описание обязательно';
     }
     
     if (price) {
@@ -126,13 +124,9 @@ export default function AddListingPage() {
       if (priceNum <= 0 || isNaN(priceNum)) {
         newErrors.price = '❌ Укажите цену больше 0';
       }
-    } else if (!price && (title || description || photos.length > 0)) {
-      newErrors.price = '❌ Укажите цену';
     }
     
-    if (photos.length === 0 && (title || description || price)) {
-      newErrors.photos = '❌ Добавьте минимум 1 фото';
-    }
+    // Фото не обязательны, но рекомендуем
     
     if (!category && (title || description || price || photos.length > 0)) {
       newErrors.category = '❌ Выберите категорию';
@@ -143,10 +137,9 @@ export default function AddListingPage() {
 
   const isFormValid = () => {
     return title.trim().length >= 3 
-      && description.trim().length >= 10 
+      && description.trim().length >= 5 
       && price && parseFloat(price) > 0 
-      && category 
-      && photos.length > 0;
+      && category;
   };
 
   const compressImage = (file: File): Promise<string> => {
@@ -575,20 +568,21 @@ export default function AddListingPage() {
 
             {/* Подсказки */}
             <div style={{
-              background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1))',
-              borderRadius: '12px',
-              padding: '16px',
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              borderRadius: '16px',
+              padding: '20px',
               marginBottom: '20px',
-              border: '2px solid rgba(102, 126, 234, 0.2)'
+              boxShadow: '0 8px 24px rgba(102, 126, 234, 0.3)',
+              color: 'white'
             }}>
-              <h4 style={{ fontSize: '16px', fontWeight: '700', marginBottom: '8px', color: '#667eea' }}>
-                💡 Советы для лучшего объявления:
+              <h4 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                ✨ Советы для лучшего объявления:
               </h4>
-              <ul style={{ fontSize: '14px', color: '#64748b', lineHeight: '1.8', paddingLeft: '20px' }}>
-                <li>Добавьте качественные фото с разных ракурсов</li>
-                <li>Опишите состояние товара честно и подробно</li>
-                <li>Укажите причину продажи - это повышает доверие</li>
-                <li>Реагируйте быстро на сообщения покупателей</li>
+              <ul style={{ fontSize: '15px', lineHeight: '2', paddingLeft: '20px', margin: 0 }}>
+                <li><strong>📸 Фото:</strong> Добавьте 3-5 качественных фото с разных ракурсов</li>
+                <li><strong>📝 Описание:</strong> Укажите состояние, размеры, причину продажи</li>
+                <li><strong>💰 Цена:</strong> Адекватная цена = быстрая продажа</li>
+                <li><strong>⚡ Активность:</strong> Быстро отвечайте на сообщения</li>
               </ul>
             </div>
           </>
@@ -599,12 +593,20 @@ export default function AddListingPage() {
           {!isFormValid() && !showPreview && (
             <div style={{
               textAlign: 'center',
-              color: '#ef4444',
+              color: '#f59e0b',
               fontSize: '14px',
               marginBottom: '12px',
-              fontWeight: '600'
+              fontWeight: '600',
+              background: 'rgba(245, 158, 11, 0.1)',
+              padding: '12px',
+              borderRadius: '12px',
+              border: '2px solid rgba(245, 158, 11, 0.3)'
             }}>
-              ⚠️ Заполните все обязательные поля правильно
+              💡 {title.length < 3 ? 'Добавьте название (минимум 3 символа)' : 
+                   description.length < 5 ? 'Добавьте описание (минимум 5 символов)' :
+                   !price || parseFloat(price) <= 0 ? 'Укажите цену' :
+                   !category ? 'Выберите категорию' :
+                   'Заполните обязательные поля'}
             </div>
           )}
           <button

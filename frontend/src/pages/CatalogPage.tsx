@@ -54,9 +54,9 @@ export default function CatalogPage() {
   const [showFilter, setShowFilter] = useState(false);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
 
-  // Фильтры локации
-  const [selectedCountry, setSelectedCountry] = useState<string>(user?.country || '');
-  const [selectedCity, setSelectedCity] = useState<string>(user?.city || '');
+  // Фильтры локации (по умолчанию показываем ВСЕ объявления)
+  const [selectedCountry, setSelectedCountry] = useState<string>('');
+  const [selectedCity, setSelectedCity] = useState<string>('');
   const [availableCountries, setAvailableCountries] = useState<string[]>([]);
   const [availableCities, setAvailableCities] = useState<string[]>([]);
 
@@ -672,28 +672,54 @@ export default function CatalogPage() {
                       <option key={city} value={city}>{city}</option>
                     ))}
                   </select>
-                  {user && (
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    {user && (
+                      <button
+                        onClick={() => {
+                          setSelectedCountry(user.country);
+                          setSelectedCity(user.city);
+                        }}
+                        style={{
+                          flex: 1,
+                          padding: '8px 12px',
+                          borderRadius: '8px',
+                          border: 'none',
+                          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                          color: 'white',
+                          fontSize: '12px',
+                          cursor: 'pointer',
+                          transition: 'transform 0.2s',
+                          fontWeight: '600'
+                        }}
+                        onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
+                        onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                      >
+                        📍 Мой город
+                      </button>
+                    )}
                     <button
                       onClick={() => {
-                        setSelectedCountry(user.country);
-                        setSelectedCity(user.city);
+                        setSelectedCountry('');
+                        setSelectedCity('');
                       }}
                       style={{
+                        flex: 1,
                         padding: '8px 12px',
                         borderRadius: '8px',
-                        border: 'none',
-                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                        color: 'white',
+                        border: '2px solid #667eea',
+                        background: 'white',
+                        color: '#667eea',
                         fontSize: '12px',
                         cursor: 'pointer',
-                        transition: 'transform 0.2s'
+                        transition: 'all 0.2s',
+                        fontWeight: '600'
                       }}
                       onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
                       onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
                     >
-                      📍 Мой город ({user.city}, {user.country})
+                      🌍 Все города
                     </button>
-                  )}
+                  </div>
                 </div>
               </div>
 
