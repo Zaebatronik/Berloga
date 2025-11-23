@@ -1,1 +1,1 @@
-2025-11-23-critical-fix-v3
+2025-11-23-auto-deploy-test-banner
