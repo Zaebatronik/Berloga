@@ -20,14 +20,22 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
 
-      - name: Install and Build
+      - name: Install dependencies
         run: |
           cd frontend
-          npm ci --legacy-peer-deps
+          echo "📦 Installing dependencies..."
+          npm install --legacy-peer-deps
+          echo "✅ Dependencies installed"
+        
+      - name: Build project
+        run: |
+          cd frontend
+          echo "🔨 Building project..."
           npm run build
+          echo "✅ Build complete"
+          echo "📁 Checking dist folder..."
+          ls -la dist/
         env:
           NODE_ENV: production
 
