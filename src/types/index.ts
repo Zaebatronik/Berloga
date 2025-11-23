@@ -12,6 +12,7 @@ export interface User {
   };
   createdAt: Date;
   registrationDate?: string;
+  banned?: boolean;
 }
 
 export interface Listing {

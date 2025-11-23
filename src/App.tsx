@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useStore } from './store';
@@ -21,10 +21,12 @@ import SupportPage from './pages/SupportPage';
 import ChatPage from './pages/ChatPage';
 import AdminPage from './pages/AdminPage';
 import GoodbyePage from './pages/GoodbyePage';
+import BannedPage from './pages/BannedPage';
 
 function App() {
   const { i18n } = useTranslation();
-  const { isRegistered, language } = useStore();
+  const { isRegistered, language, user } = useStore();
+  const [isBanned, setIsBanned] = useState(false);
 
   useEffect(() => {
     // Инициализация Telegram Web App
@@ -37,6 +39,40 @@ function App() {
     // Установка языка
     i18n.changeLanguage(language);
   }, [language, i18n]);
+
+  // Проверка бана при загрузке приложения
+  useEffect(() => {
+    const checkBanStatus = async () => {
+      if (isRegistered && user?.id) {
+        try {
+          const { userAPI } = await import('./services/api');
+          const response = await userAPI.getProfile(user.id);
+          if (response.data.banned) {
+            setIsBanned(true);
+          }
+        } catch (error) {
+          console.error('Failed to check ban status:', error);
+        }
+      }
+    };
+
+    checkBanStatus();
+    
+    // Проверяем бан каждые 5 секунд
+    const interval = setInterval(checkBanStatus, 5000);
+    return () => clearInterval(interval);
+  }, [isRegistered, user]);
+
+  // Если пользователь забанен - показываем только страницу бана
+  if (isBanned) {
+    return (
+      <BrowserRouter>
+        <Routes>
+          <Route path="*" element={<BannedPage />} />
+        </Routes>
+      </BrowserRouter>
+    );
+  }
 
   return (
     <BrowserRouter>

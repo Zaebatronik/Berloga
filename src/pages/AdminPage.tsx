@@ -50,14 +50,14 @@ export default function AdminPage() {
         const response = await userAPI.getAll();
         const serverUsers = response.data;
 
-        const adminUsers: AdminUser[] = serverUsers.map((user: User) => ({
+        const adminUsers: AdminUser[] = serverUsers.map((user: any) => ({
           id: user.id,
           nickname: user.nickname,
           country: user.country,
           city: user.city,
           listingsCount: listings.filter((l) => l.userId === user.id).length,
           joinedAt: user.createdAt ? new Date(user.createdAt).toLocaleDateString('ru-RU') : 'Неизвестно',
-          status: 'active' as const,
+          status: user.banned ? 'banned' : 'active',
           isAdmin: user.id === ADMIN_ID,
         }));
 
@@ -118,21 +118,43 @@ export default function AdminPage() {
     );
   }
 
-  const handleBanUser = (userId: string) => {
-    if (window.confirm('Забанить этого пользователя?')) {
+  const handleBanUser = async (userId: string) => {
+    if (window.confirm('Забанить этого пользователя? Он будет немедленно выкинут из приложения!')) {
+      // Обновляем локально
       setUsers(prev => prev.map(u => 
         u.id === userId ? { ...u, status: 'banned' } : u
       ));
+
+      // Сохраняем на сервер
+      try {
+        const { userAPI } = await import('../services/api');
+        await userAPI.updateProfile(userId, { banned: true });
+        console.log(`User ${userId} banned on server`);
+      } catch (error) {
+        console.error('Failed to ban user on server:', error);
+      }
+
       if (window.Telegram?.WebApp?.HapticFeedback) {
         window.Telegram.WebApp.HapticFeedback.notificationOccurred('warning');
       }
     }
   };
 
-  const handleUnbanUser = (userId: string) => {
+  const handleUnbanUser = async (userId: string) => {
+    // Обновляем локально
     setUsers(prev => prev.map(u => 
       u.id === userId ? { ...u, status: 'active' } : u
     ));
+
+    // Сохраняем на сервер
+    try {
+      const { userAPI } = await import('../services/api');
+      await userAPI.updateProfile(userId, { banned: false });
+      console.log(`User ${userId} unbanned on server`);
+    } catch (error) {
+      console.error('Failed to unban user on server:', error);
+    }
+
     if (window.Telegram?.WebApp?.HapticFeedback) {
       window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
     }
