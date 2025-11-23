@@ -13,11 +13,6 @@ export default function MainMenu() {
   const currentUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() || '';
   const isAdmin = currentUserId === ADMIN_ID;
 
-  // Отладка: показываем ID в консоли
-  console.log('Current User ID:', currentUserId);
-  console.log('Admin ID:', ADMIN_ID);
-  console.log('Is Admin:', isAdmin);
-
   const menuItems = [
     { icon: '📁', label: t('menu.catalog'), path: '/catalog' },
     { icon: '➕', label: t('menu.addListing'), path: '/add' },
@@ -29,13 +24,11 @@ export default function MainMenu() {
   ];
 
   const handleLogout = () => {
-    if (window.confirm('Вы уверены, что хотите выйти? Придётся пройти регистрацию заново.')) {
-      // Очищаем данные пользователя и состояние регистрации
-      clearUser();
-      localStorage.clear();
-      // Переходим на страницу прощания
-      navigate('/goodbye', { replace: true });
-    }
+    // Очищаем данные пользователя и состояние регистрации
+    clearUser();
+    localStorage.clear();
+    // Переходим на страницу прощания
+    window.location.href = '/goodbye';
   };
 
   return (
@@ -46,9 +39,6 @@ export default function MainMenu() {
         </button>
         <h1>🐻 Берлога</h1>
         <p className="menu-description">Покупай и продавай что угодно рядом с домом</p>
-        <p style={{ fontSize: '12px', color: '#999', marginTop: '10px' }}>
-          Debug: ID={currentUserId} Admin={isAdmin ? 'YES' : 'NO'}
-        </p>
       </div>
       <div className="menu-grid">
         {menuItems.map((item) => (
