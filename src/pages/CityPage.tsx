@@ -98,14 +98,6 @@ export default function CityPage() {
 
   const filteredCities = cities;
 
-  const handleContinue = () => {
-    if (selectedCity || searchQuery) {
-      const city = selectedCity || searchQuery;
-      localStorage.setItem('registrationCity', city);
-      navigate('/radius');
-    }
-  };
-
   return (
     <div className="city-page">
       <div className="container">
@@ -127,21 +119,19 @@ export default function CityPage() {
             onClick={() => {
               setSelectedCity(city);
               setSearchQuery(city);
+              if (window.Telegram?.WebApp?.HapticFeedback) {
+                window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+              }
+              // Автоматический переход после выбора
+              localStorage.setItem('registrationCity', city);
+              setTimeout(() => {
+                navigate('/radius');
+              }, 300);
             }}
           >
             {city}
           </button>
         ))}
-      </div>
-
-      <div className="fixed-bottom">
-        <button
-          className="btn btn-primary btn-large"
-          disabled={!selectedCity && !searchQuery}
-          onClick={handleContinue}
-        >
-          {t('registration.continue')}
-        </button>
       </div>
       </div>
     </div>
