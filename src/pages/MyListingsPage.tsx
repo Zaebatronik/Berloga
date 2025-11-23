@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useStore } from '../store';
 import '../styles/MyListingsPage.css';
 
 interface Listing {
@@ -15,47 +16,32 @@ interface Listing {
   createdAt: string;
 }
 
-// Моковые данные (в будущем будут из API)
-const MOCK_LISTINGS: Listing[] = [
-  {
-    id: '1',
-    title: 'iPhone 13 Pro 256GB Graphite',
-    price: 65000,
-    photo: 'https://images.unsplash.com/photo-1632661674596-df8be070a5c5?w=400',
-    category: 'electronics',
-    status: 'active',
-    views: 234,
-    favorites: 12,
-    createdAt: '2024-01-15'
-  },
-  {
-    id: '2',
-    title: 'Диван угловой, велюр, серый',
-    price: 28000,
-    photo: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400',
-    category: 'furniture',
-    status: 'active',
-    views: 89,
-    favorites: 5,
-    createdAt: '2024-01-10'
-  },
-  {
-    id: '3',
-    title: 'Велосипед горный Trek X-Caliber',
-    price: 45000,
-    photo: 'https://images.unsplash.com/photo-1576435728678-68d0fbf94e91?w=400',
-    category: 'sports',
-    status: 'hidden',
-    views: 156,
-    favorites: 8,
-    createdAt: '2024-01-05'
-  }
-];
-
 export default function MyListingsPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [listings, setListings] = useState<Listing[]>(MOCK_LISTINGS);
+  const { listings: allListings, user } = useStore();
+  const [filter, setFilter] = useState<'all' | 'active' | 'hidden' | 'sold'>('all');
+
+  // Фильтруем только объявления текущего пользователя
+  const myListings = allListings.filter(l => l.userId === user?.id);
+
+  const [listings, setListings] = useState<Listing[]>([]);
+
+  useEffect(() => {
+    // Преобразуем формат объявлений
+    const formatted = myListings.map(l => ({
+      id: l.id,
+      title: l.title,
+      price: l.price || 0,
+      photo: l.photos[0] || '',
+      category: l.category,
+      status: l.status === 'active' ? 'active' : 'hidden' as 'active' | 'hidden' | 'sold',
+      views: l.views,
+      favorites: l.favoritesCount || 0,
+      createdAt: new Date(l.createdAt).toLocaleDateString('ru-RU')
+    }));
+    setListings(formatted);
+  }, [myListings]);
   const [filter, setFilter] = useState<'all' | 'active' | 'hidden' | 'sold'>('all');
 
   const filteredListings = filter === 'all' 

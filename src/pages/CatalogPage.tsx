@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import { useStore } from '../store';
 import '../styles/CatalogPage.css';
 
 interface Listing {
@@ -19,154 +20,6 @@ interface Listing {
 
 const ITEMS_PER_PAGE = 12;
 
-// Моковые данные для демонстрации
-const mockListings: Listing[] = [
-  {
-    id: '1',
-    title: 'iPhone 14 Pro 256GB Space Black',
-    description: 'Отличное состояние, полный комплект',
-    price: 75000,
-    negotiable: true,
-    category: 'electronics',
-    city: 'Москва',
-    photos: [],
-    createdAt: '2025-11-20',
-    userId: 'user1',
-  },
-  {
-    id: '2',
-    title: 'Квартира 2-комнатная в центре',
-    description: 'Уютная квартира с ремонтом',
-    price: 8500000,
-    negotiable: false,
-    category: 'realestate',
-    city: 'Санкт-Петербург',
-    photos: [],
-    createdAt: '2025-11-19',
-    userId: 'user2',
-  },
-  {
-    id: '3',
-    title: 'BMW X5 2020',
-    description: 'Полная комплектация, один хозяин',
-    price: 4200000,
-    negotiable: true,
-    category: 'transport',
-    city: 'Москва',
-    photos: [],
-    createdAt: '2025-11-18',
-    userId: 'user3',
-  },
-  {
-    id: '4',
-    title: 'MacBook Pro 16" M2 Max',
-    description: 'Как новый, AppleCare+',
-    price: 250000,
-    negotiable: false,
-    category: 'electronics',
-    city: 'Казань',
-    photos: [],
-    createdAt: '2025-11-17',
-    userId: 'user4',
-  },
-  {
-    id: '5',
-    title: 'Дизайнерские услуги',
-    description: 'Создание логотипов, брендинг',
-    price: 15000,
-    negotiable: true,
-    category: 'services',
-    city: 'Москва',
-    photos: [],
-    createdAt: '2025-11-16',
-    userId: 'user5',
-  },
-  {
-    id: '6',
-    title: 'Зимняя куртка North Face',
-    description: 'Размер L, новая',
-    price: 12000,
-    negotiable: false,
-    category: 'fashion',
-    city: 'Екатеринбург',
-    photos: [],
-    createdAt: '2025-11-15',
-    userId: 'user6',
-  },
-  {
-    id: '7',
-    title: 'Диван угловой IKEA',
-    description: 'Серый, отличное состояние',
-    price: 25000,
-    negotiable: true,
-    category: 'home',
-    city: 'Новосибирск',
-    photos: [],
-    createdAt: '2025-11-14',
-    userId: 'user7',
-  },
-  {
-    id: '8',
-    title: 'Горный велосипед Trek',
-    description: '29 дюймов, карбон',
-    price: 85000,
-    negotiable: false,
-    category: 'hobbies',
-    city: 'Москва',
-    photos: [],
-    createdAt: '2025-11-13',
-    userId: 'user8',
-  },
-  {
-    id: '9',
-    title: 'Британский котенок',
-    description: 'Голубой окрас, 3 месяца',
-    price: 30000,
-    negotiable: false,
-    category: 'animals',
-    city: 'Санкт-Петербург',
-    photos: [],
-    createdAt: '2025-11-12',
-    userId: 'user9',
-  },
-  {
-    id: '10',
-    title: 'Удаленная работа Python',
-    description: 'Backend разработчик',
-    price: 180000,
-    negotiable: true,
-    category: 'jobs',
-    city: 'Удаленно',
-    photos: [],
-    createdAt: '2025-11-11',
-    userId: 'user10',
-  },
-  {
-    id: '11',
-    title: 'PlayStation 5 с играми',
-    description: 'Disc версия + 5 игр',
-    price: 48000,
-    negotiable: true,
-    category: 'electronics',
-    city: 'Москва',
-    photos: [],
-    createdAt: '2025-11-10',
-    userId: 'user11',
-  },
-  {
-    id: '12',
-    title: 'Фотоаппарат Canon EOS R6',
-    description: 'Пробег 5000 кадров',
-    price: 165000,
-    negotiable: false,
-    category: 'electronics',
-    city: 'Краснодар',
-    photos: [],
-    createdAt: '2025-11-09',
-    userId: 'user12',
-  },
-];
-
 const categoryEmojis: Record<string, string> = {
   all: '📦',
   transport: '🚗',
@@ -184,7 +37,8 @@ const categoryEmojis: Record<string, string> = {
 export default function CatalogPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-
+  const { listings: storeListings } = useStore();
+  
   const [listings, setListings] = useState<Listing[]>([]);
   const [filteredListings, setFilteredListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
@@ -199,19 +53,26 @@ export default function CatalogPage() {
   const [priceMin, setPriceMin] = useState('');
   const [priceMax, setPriceMax] = useState('');
 
-  // Загрузка данных
+  // Загрузка данных из store
   useEffect(() => {
-    const loadListings = async () => {
-      setLoading(true);
-      // Имитация загрузки с сервера
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      setListings(mockListings);
-      setFilteredListings(mockListings);
-      setLoading(false);
-    };
-
-    loadListings();
-  }, []);
+    setLoading(true);
+    const formattedListings = storeListings.map(l => ({
+      id: l.id,
+      title: l.title,
+      description: l.description,
+      price: l.price || 0,
+      negotiable: l.negotiable,
+      category: l.category,
+      city: l.city,
+      photos: l.photos,
+      createdAt: new Date(l.createdAt).toISOString(),
+      userId: l.userId,
+      isFavorite: false
+    }));
+    setListings(formattedListings);
+    setFilteredListings(formattedListings);
+    setLoading(false);
+  }, [storeListings]);
 
   // Фильтрация и сортировка
   useEffect(() => {
