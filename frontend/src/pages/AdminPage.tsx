@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../store';
+import { currencyService } from '../services/currency';
 import type { User } from '@/types';
 import '../styles/AdminPage.css';
 
@@ -47,6 +48,7 @@ export default function AdminPage() {
   const [loadingListings, setLoadingListings] = useState(false);
   const [logs, setLogs] = useState<string[]>([]);
   const [liveUpdating, setLiveUpdating] = useState(false);
+  const [dualPrices, setDualPrices] = useState<Map<string, string>>(new Map());
   const socketRef = useRef<Socket | null>(null);
 
   // Проверка доступа: только админ может видеть эту страницу
@@ -284,6 +286,22 @@ export default function AdminPage() {
         `📦 Загружено ${response.data.length} объявлений пользователя`,
         ...lgs
       ]);
+      
+      // Форматируем цены
+      const formatPrices = async () => {
+        const priceMap = new Map<string, string>();
+        const selectedUser = users.find(u => u.id === userId);
+        const userCountry = selectedUser ? (allUsers.find(u => (u.telegramId || u.id) === userId)?.country || 'Украина') : 'Украина';
+        
+        for (const listing of response.data) {
+          const formattedPrice = await currencyService.formatDualPrice(listing.price, userCountry);
+          priceMap.set(listing._id, formattedPrice);
+        }
+        
+        setDualPrices(priceMap);
+      };
+      
+      formatPrices();
     } catch (error) {
       console.error('❌ Ошибка загрузки объявлений:', error);
       setUserListings([]);
@@ -795,7 +813,7 @@ export default function AdminPage() {
                               {listing.description?.substring(0, 100)}{listing.description?.length > 100 ? '...' : ''}
                             </div>
                             <div style={{display:'flex',gap:12,fontSize:12,opacity:0.8,flexWrap:'wrap'}}>
-                              <span>💰 {listing.price}₽ {listing.negotiable && '(торг)'}</span>
+                              <span>💰 {dualPrices.get(listing._id) || '...'} {listing.negotiable && '(торг)'}</span>
                               <span>📁 {listing.category}</span>
                               <span>📍 {listing.city}, {listing.country}</span>
                               <span>👁️ {listing.views || 0} просмотров</span>

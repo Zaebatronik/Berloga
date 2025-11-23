@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useStore } from '../store';
 import { listingsAPI } from '../services/api';
+import { currencyService } from '../services/currency';
 import '../styles/AddListingPage.css';
 
 const CATEGORIES = [
@@ -34,6 +35,7 @@ export default function AddListingPage() {
   const [photos, setPhotos] = useState<string[]>([]);
   const [negotiable, setNegotiable] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [localPrice, setLocalPrice] = useState('');
   const [showPreview, setShowPreview] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
@@ -56,6 +58,30 @@ export default function AddListingPage() {
       }
     }
   }, []);
+
+  // Конвертация цены в локальную валюту
+  useEffect(() => {
+    const convertPrice = async () => {
+      if (price && user?.country) {
+        const priceNum = parseFloat(price);
+        if (!isNaN(priceNum) && priceNum > 0) {
+          const localCurrency = currencyService.getCurrencyByCountry(user.country);
+          if (localCurrency !== 'USD') {
+            const converted = await currencyService.convertFromUSD(priceNum, localCurrency);
+            const symbol = currencyService.getCurrencySymbol(localCurrency);
+            setLocalPrice(`≈ ${symbol}${Math.round(converted).toLocaleString()}`);
+          } else {
+            setLocalPrice('');
+          }
+        } else {
+          setLocalPrice('');
+        }
+      } else {
+        setLocalPrice('');
+      }
+    };
+    convertPrice();
+  }, [price, user?.country]);
 
   // Автосохранение черновика каждые 3 секунды
   useEffect(() => {
@@ -404,9 +430,14 @@ export default function AddListingPage() {
               {description || 'Описание объявления...'}
             </p>
             <div style={{ fontSize: '28px', fontWeight: '800', color: '#667eea', marginBottom: '8px' }}>
-              {price ? `${parseFloat(price).toLocaleString('ru-RU')} ₽` : '0 ₽'}
+              {price ? `$${parseFloat(price).toLocaleString('ru-RU')}` : '$0'}
               {negotiable && <span style={{ fontSize: '14px', color: '#64748b', marginLeft: '8px' }}>• Торг</span>}
             </div>
+            {localPrice && (
+              <div style={{ fontSize: '16px', color: '#94a3b8', marginBottom: '8px' }}>
+                {localPrice}
+              </div>
+            )}
             <div style={{ fontSize: '14px', color: '#94a3b8' }}>
               📍 {user?.city}, {user?.country}
             </div>
@@ -511,7 +542,7 @@ export default function AddListingPage() {
             {/* Цена */}
             <div className="form-section">
               <label className="section-label">
-                {t('addListing.price')}
+                {t('addListing.price')} (в долларах USA)
                 {errors.price && <span style={{ color: '#ef4444', marginLeft: '8px', fontSize: '13px' }}>⚠️ {errors.price}</span>}
               </label>
               <div className="price-input-wrapper">
@@ -522,9 +553,15 @@ export default function AddListingPage() {
                   value={price}
                   onChange={(e) => setPrice(e.target.value)}
                   min="0"
+                  step="0.01"
                 />
-                <span className="currency">₽</span>
+                <span className="currency">$</span>
               </div>
+              {localPrice && (
+                <div style={{ fontSize: '14px', color: '#667eea', marginTop: '8px', fontWeight: '500' }}>
+                  💱 В вашей валюте: {localPrice}
+                </div>
+              )}
               <label className="checkbox-label">
                 <input
                   type="checkbox"

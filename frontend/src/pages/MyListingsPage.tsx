@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useStore } from '../store';
+import { currencyService } from '../services/currency';
 import '../styles/MyListingsPage.css';
 
 interface Listing {
@@ -21,6 +22,7 @@ export default function MyListingsPage() {
   const navigate = useNavigate();
   const { listings: allListings, user } = useStore();
   const [filter, setFilter] = useState<'all' | 'active' | 'hidden' | 'sold'>('all');
+  const [dualPrices, setDualPrices] = useState<Map<string, string>>(new Map());
 
   // Фильтруем только объявления текущего пользователя
   const myListings = allListings.filter(l => l.userId === user?.id);
@@ -41,7 +43,22 @@ export default function MyListingsPage() {
       createdAt: new Date(l.createdAt).toLocaleDateString('ru-RU')
     }));
     setListings(formatted);
-  }, [myListings]);
+    
+    // Форматируем цены
+    const formatPrices = async () => {
+      const priceMap = new Map<string, string>();
+      const userCountry = user?.country || 'Украина';
+      
+      for (const listing of formatted) {
+        const formattedPrice = await currencyService.formatDualPrice(listing.price, userCountry);
+        priceMap.set(listing.id, formattedPrice);
+      }
+      
+      setDualPrices(priceMap);
+    };
+    
+    formatPrices();
+  }, [myListings, user?.country]);
 
   const filteredListings = filter === 'all' 
     ? listings 
@@ -169,7 +186,7 @@ export default function MyListingsPage() {
 
                   <div className="listing-content">
                     <h3 className="listing-title">{listing.title}</h3>
-                    <div className="listing-price">{listing.price.toLocaleString('ru-RU')} ₽</div>
+                    <div className="listing-price">{dualPrices.get(listing.id) || '...'}</div>
                     
                     <div className="listing-stats">
                       <span className="stat">👁 {listing.views}</span>

@@ -3,6 +3,7 @@ import { io, Socket } from 'socket.io-client';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../store';
+import { currencyService } from '../services/currency';
 import '../styles/CatalogPage.css';
 
 interface Listing {
@@ -310,9 +311,24 @@ export default function CatalogPage() {
     setShowFilter(false);
   };
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('ru-RU').format(price) + ' ₽';
-  };
+  // Форматирование двойных цен
+  const [dualPrices, setDualPrices] = useState<Map<string, string>>(new Map());
+  
+  useEffect(() => {
+    const formatAllPrices = async () => {
+      const priceMap = new Map<string, string>();
+      const userCountry = user?.country || 'Украина';
+      
+      for (const listing of filteredListings) {
+        const formatted = await currencyService.formatDualPrice(listing.price, userCountry);
+        priceMap.set(listing.id, formatted);
+      }
+      
+      setDualPrices(priceMap);
+    };
+    
+    formatAllPrices();
+  }, [filteredListings, user?.country]);
 
   const categories = [
     'all',
@@ -543,7 +559,7 @@ export default function CatalogPage() {
                   <div className="listing-info">
                     <div className="listing-price">
                       {listing.negotiable ? '≈ ' : ''}
-                      {formatPrice(listing.price)}
+                      {dualPrices.get(listing.id) || '...'}
                     </div>
                     <div className="listing-title">{listing.title}</div>
                     <div className="listing-location">📍 {listing.city}</div>
@@ -682,7 +698,7 @@ export default function CatalogPage() {
               </div>
 
               <div className="filter-section">
-                <div className="filter-section-title">💰 Цена, ₽</div>
+                <div className="filter-section-title">💰 Цена, $</div>
                 <div className="price-inputs">
                   <input
                     type="number"
