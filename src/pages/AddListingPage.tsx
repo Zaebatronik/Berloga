@@ -33,7 +33,6 @@ export default function AddListingPage() {
     const files = event.target.files;
     if (!files) return;
 
-    const newPhotos: string[] = [];
     const maxPhotos = 5;
 
     for (let i = 0; i < Math.min(files.length, maxPhotos - photos.length); i++) {
