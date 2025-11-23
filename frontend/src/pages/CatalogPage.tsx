@@ -282,7 +282,7 @@ export default function CatalogPage() {
   useEffect(() => {
     const formatAllPrices = async () => {
       const priceMap = new Map<string, string>();
-      const userCountry = user?.country || 'Украина';
+      const userCountry = user?.country || 'UA'; // Default to Ukraine code
       
       for (const listing of filteredListings) {
         const formatted = await currencyService.formatDualPrice(listing.price, userCountry);
