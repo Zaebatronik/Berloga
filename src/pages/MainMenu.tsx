@@ -24,11 +24,13 @@ export default function MainMenu() {
   ];
 
   const handleLogout = () => {
-    // Очищаем данные пользователя и состояние регистрации
-    clearUser();
-    localStorage.clear();
-    // Переходим на страницу прощания
-    window.location.href = '/goodbye';
+    if (window.confirm('Вы уверены, что хотите выйти? Придётся пройти регистрацию заново.')) {
+      // Очищаем данные пользователя и состояние регистрации
+      clearUser();
+      localStorage.clear();
+      // Переходим на страницу прощания
+      window.location.href = '/goodbye';
+    }
   };
 
   return (
