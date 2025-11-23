@@ -1,11 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useStore } from '../store';
+import type { User } from '@/types';
 import '../styles/AdminPage.css';
 
 // ID админа (ваш Telegram ID)
 const ADMIN_ID = '670170626';
 
-interface User {
+interface AdminUser {
   id: string;
   nickname: string;
   country: string;
@@ -13,6 +15,7 @@ interface User {
   listingsCount: number;
   joinedAt: string;
   status: 'active' | 'banned';
+  isAdmin?: boolean;
 }
 
 interface Report {
@@ -25,14 +28,6 @@ interface Report {
   status: 'pending' | 'resolved' | 'rejected';
 }
 
-// Моковые данные
-const MOCK_USERS: User[] = [
-  { id: '1', nickname: 'ivan_petrov', country: '🇷🇺 Россия', city: 'Москва', listingsCount: 5, joinedAt: '2024-01-10', status: 'active' },
-  { id: '2', nickname: 'maria_s', country: '🇷🇺 Россия', city: 'Санкт-Петербург', listingsCount: 3, joinedAt: '2024-01-12', status: 'active' },
-  { id: '3', nickname: 'alex_ua', country: '🇺🇦 Україна', city: 'Київ', listingsCount: 8, joinedAt: '2024-01-08', status: 'active' },
-  { id: '4', nickname: 'scammer123', country: '🇷🇺 Россия', city: 'Казань', listingsCount: 15, joinedAt: '2024-01-15', status: 'banned' },
-];
-
 const MOCK_REPORTS: Report[] = [
   { id: '1', reporterNickname: 'ivan_petrov', listingId: 'L123', listingTitle: 'iPhone подозрительно дешевый', reason: 'Возможное мошенничество', createdAt: '2024-01-15T10:30:00', status: 'pending' },
   { id: '2', reporterNickname: 'maria_s', listingId: 'L456', listingTitle: 'Спам реклама', reason: 'Спам и реклама', createdAt: '2024-01-14T15:20:00', status: 'pending' },
@@ -41,9 +36,41 @@ const MOCK_REPORTS: Report[] = [
 
 export default function AdminPage() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'stats' | 'users' | 'reports'>('stats');
-  const [users, setUsers] = useState<User[]>(MOCK_USERS);
+  const { allUsers, listings } = useStore();
+  const [activeTab, setActiveTab] = useState<'stats' | 'users' | 'reports'>('users');
+  const [users, setUsers] = useState<AdminUser[]>([]);
   const [reports, setReports] = useState<Report[]>(MOCK_REPORTS);
+
+  // Формируем список пользователей из реестра
+  useEffect(() => {
+    const adminUsers: AdminUser[] = allUsers.map((user: User) => ({
+      id: user.id,
+      nickname: user.nickname,
+      country: user.country,
+      city: user.city,
+      listingsCount: listings.filter((l) => l.userId === user.id).length,
+      joinedAt: user.createdAt ? new Date(user.createdAt).toLocaleDateString('ru-RU') : 'Неизвестно',
+      status: 'active' as const,
+      isAdmin: user.id === ADMIN_ID,
+    }));
+
+    // Добавляем администратора если его еще нет
+    const hasAdmin = adminUsers.some((u) => u.id === ADMIN_ID);
+    if (!hasAdmin) {
+      adminUsers.unshift({
+        id: ADMIN_ID,
+        nickname: 'Администратор',
+        country: 'Система',
+        city: 'Система',
+        listingsCount: 0,
+        joinedAt: new Date().toLocaleDateString('ru-RU'),
+        status: 'active',
+        isAdmin: true,
+      });
+    }
+
+    setUsers(adminUsers);
+  }, [allUsers, listings]);
 
   // Проверка доступа (в реальном приложении это будет на бэкенде)
   const currentUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() || '123456789';
@@ -173,34 +200,39 @@ export default function AdminPage() {
           <div className="users-content">
             <div className="users-list">
               {users.map(user => (
-                <div key={user.id} className={`user-card ${user.status === 'banned' ? 'banned' : ''}`}>
+                <div key={user.id} className={`user-card ${user.status === 'banned' ? 'banned' : ''} ${user.isAdmin ? 'admin-card' : ''}`}>
                   <div className="user-info">
                     <div className="user-header">
-                      <span className="user-nickname">{user.nickname}</span>
+                      <span className="user-nickname">
+                        {user.isAdmin && '👑 '}
+                        {user.nickname}
+                      </span>
+                      {user.isAdmin && <span className="admin-badge">АДМИНИСТРАТОР</span>}
                       {user.status === 'banned' && <span className="banned-badge">🚫 Забанен</span>}
                     </div>
                     <div className="user-details">
+                      <span>ID: {user.id}</span>
                       <span>{user.country} • {user.city}</span>
                       <span>{user.listingsCount} объявлений</span>
-                      <span>С {new Date(user.joinedAt).toLocaleDateString('ru-RU')}</span>
+                      <span>С {user.joinedAt}</span>
                     </div>
                   </div>
                   <div className="user-actions">
-                    {user.status === 'active' ? (
+                    {!user.isAdmin && user.status === 'active' ? (
                       <button 
                         className="action-btn ban-btn"
                         onClick={() => handleBanUser(user.id)}
                       >
                         🚫 Забанить
                       </button>
-                    ) : (
+                    ) : !user.isAdmin && user.status === 'banned' ? (
                       <button 
                         className="action-btn unban-btn"
                         onClick={() => handleUnbanUser(user.id)}
                       >
                         ✅ Разбанить
                       </button>
-                    )}
+                    ) : null}
                   </div>
                 </div>
               ))}

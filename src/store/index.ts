@@ -33,6 +33,10 @@ interface AppState {
   addChat: (chat: Chat) => void;
   updateChat: (chatId: string, updates: Partial<Chat>) => void;
 
+  // All registered users (for admin)
+  allUsers: User[];
+  addUserToRegistry: (user: User) => void;
+
   // Filters
   filters: {
     category: string;
@@ -99,6 +103,16 @@ export const useStore = create<AppState>()(
             c.id === chatId ? { ...c, ...updates } : c
           ),
         })),
+
+      // All registered users
+      allUsers: [],
+      addUserToRegistry: (user) =>
+        set((state) => {
+          // Проверяем что пользователь еще не добавлен
+          const exists = state.allUsers.some((u) => u.id === user.id);
+          if (exists) return state;
+          return { allUsers: [...state.allUsers, user] };
+        }),
 
       // Filters
       filters: {

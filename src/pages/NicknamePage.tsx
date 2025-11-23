@@ -8,7 +8,7 @@ import type { User } from '../types';
 export default function NicknamePage() {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { setUser, language } = useStore();
+  const { setUser, addUserToRegistry, language } = useStore();
   const [nickname, setNickname] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -79,6 +79,8 @@ export default function NicknamePage() {
 
       // Сохраняем пользователя
       setUser(user);
+      // Добавляем в общий реестр для админа
+      addUserToRegistry(user);
 
       // Очищаем temporary data
       localStorage.removeItem('registrationCountry');
