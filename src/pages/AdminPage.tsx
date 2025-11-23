@@ -51,6 +51,7 @@ export default function AdminPage() {
         const serverUsers = response.data;
 
         console.log('🔄 AdminPage: Загружено пользователей с сервера:', serverUsers.length);
+        console.log('📋 Пользователи:', serverUsers.map((u: any) => `${u.id}:${u.nickname}`));
 
         const adminUsers: AdminUser[] = serverUsers.map((user: any) => ({
           id: user.id,
@@ -58,7 +59,7 @@ export default function AdminPage() {
           country: user.country,
           city: user.city,
           listingsCount: listings.filter((l) => l.userId === user.id).length,
-          joinedAt: user.createdAt ? new Date(user.createdAt).toLocaleDateString('ru-RU') : 'Неизвестно',
+          joinedAt: user.created_at ? new Date(user.created_at).toLocaleDateString('ru-RU') : 'Неизвестно',
           status: user.banned ? 'banned' : 'active',
           isAdmin: user.id === ADMIN_ID,
         }));
@@ -72,6 +73,8 @@ export default function AdminPage() {
 
         setUsers(adminUsers);
         console.log('✅ AdminPage: Список обновлён, всего пользователей:', adminUsers.length);
+        console.log('👥 Активных:', adminUsers.filter(u => u.status === 'active').length);
+        console.log('🚫 Забаненных:', adminUsers.filter(u => u.status === 'banned').length);
       } catch (error) {
         console.error('❌ Failed to load users from server:', error);
         // Fallback на локальные данные
