@@ -19,15 +19,30 @@ app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static('uploads'));
 
-// Routes
-app.use('/api/users', require('./routes/users'));
-app.use('/api/listings', require('./routes/listings'));
-app.use('/api/chats', require('./routes/chats'));
-app.use('/api/reports', require('./routes/reports'));
+// Routes - добавляем как с префиксом /api, так и без для совместимости
+const usersRouter = require('./routes/users');
+const listingsRouter = require('./routes/listings');
+const chatsRouter = require('./routes/chats');
+const reportsRouter = require('./routes/reports');
+
+// С префиксом /api (старый формат)
+app.use('/api/users', usersRouter);
+app.use('/api/listings', listingsRouter);
+app.use('/api/chats', chatsRouter);
+app.use('/api/reports', reportsRouter);
+
+// Без префикса /api (новый формат для совместимости)
+app.use('/users', usersRouter);
+app.use('/listings', listingsRouter);
+app.use('/chats', chatsRouter);
+app.use('/reports', reportsRouter);
 
 // Health check
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', timestamp: new Date() });
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 // Socket.IO для чатов

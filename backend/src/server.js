@@ -20,12 +20,26 @@ app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static('uploads'));
 
-// Routes
-app.use('/api/users', require('./routes/users'));
-app.use('/api/listings', require('./routes/listings'));
-app.use('/api/chats', require('./routes/chats'));
-app.use('/api/reports', require('./routes/reports'));
-app.use('/api/notifications', require('./routes/notifications'));
+// Routes - добавляем как с префиксом /api, так и без для совместимости
+const usersRouter = require('./routes/users');
+const listingsRouter = require('./routes/listings');
+const chatsRouter = require('./routes/chats');
+const reportsRouter = require('./routes/reports');
+const notificationsRouter = require('./routes/notifications');
+
+// С префиксом /api (старый формат)
+app.use('/api/users', usersRouter);
+app.use('/api/listings', listingsRouter);
+app.use('/api/chats', chatsRouter);
+app.use('/api/reports', reportsRouter);
+app.use('/api/notifications', notificationsRouter);
+
+// Без префикса /api (новый формат для совместимости)
+app.use('/users', usersRouter);
+app.use('/listings', listingsRouter);
+app.use('/chats', chatsRouter);
+app.use('/reports', reportsRouter);
+app.use('/notifications', notificationsRouter);
 
 // Health check
 app.get('/health', (req, res) => {
