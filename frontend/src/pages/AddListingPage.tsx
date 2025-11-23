@@ -77,53 +77,50 @@ export default function AddListingPage() {
     
     if (title) {
       if (title.length < 3) {
-        newErrors.title = `✏️ Еще ${3 - title.length} символ${3 - title.length === 1 ? '' : 'а'}...`;
+        newErrors.title = `✏️ Минимум 3 символа (еще ${3 - title.length})`;
       } else if (title.length > 100) {
-        newErrors.title = '⚠️ Слишком длинное название (макс 100 символов)';
-      } else if (title.length >= 3 && title.length < 10) {
-        newErrors.title = '✅ Хорошо! Можно подробнее';
+        newErrors.title = '⚠️ Максимум 100 символов';
       }
+    } else if (!title && (description || price || photos.length > 0)) {
+      newErrors.title = '❌ Название обязательно';
     }
     
     if (description) {
       if (description.length < 10) {
-        newErrors.description = `✏️ Еще ${10 - description.length} символов...`;
-      } else if (description.length >= 10 && description.length < 50) {
-        newErrors.description = '✅ Отлично! Чем подробнее, тем лучше';
+        newErrors.description = `✏️ Минимум 10 символов (еще ${10 - description.length})`;
       } else if (description.length > 1000) {
-        newErrors.description = '⚠️ Слишком длинное описание (макс 1000 символов)';
+        newErrors.description = '⚠️ Максимум 1000 символов';
       }
+    } else if (!description && (title || price || photos.length > 0)) {
+      newErrors.description = '❌ Описание обязательно';
     }
     
     if (price) {
       const priceNum = parseFloat(price);
-      if (priceNum <= 0) {
-        newErrors.price = '💰 Цена должна быть больше 0';
-      } else if (priceNum > 0 && priceNum < 10) {
-        newErrors.price = '✅ Низкая цена - привлечёт внимание!';
-      } else if (priceNum >= 10000) {
-        newErrors.price = '💎 Дорогой товар - добавьте больше фото!';
+      if (priceNum <= 0 || isNaN(priceNum)) {
+        newErrors.price = '❌ Укажите цену больше 0';
       }
+    } else if (!price && (title || description || photos.length > 0)) {
+      newErrors.price = '❌ Укажите цену';
     }
     
-    if (photos.length === 0 && (title || description)) {
-      newErrors.photos = '📷 Добавьте хотя бы 1 фото - с фото продаётся лучше!';
-    } else if (photos.length === 1) {
-      newErrors.photos = '✅ Отлично! Добавьте ещё фото (макс 5)';
-    } else if (photos.length >= 2) {
-      newErrors.photos = `✅ Супер! ${photos.length} фото - покупатели любят подробность!`;
+    if (photos.length === 0 && (title || description || price)) {
+      newErrors.photos = '❌ Добавьте минимум 1 фото';
+    }
+    
+    if (!category && (title || description || price || photos.length > 0)) {
+      newErrors.category = '❌ Выберите категорию';
     }
     
     setErrors(newErrors);
-  }, [title, description, price, photos]);
+  }, [title, description, price, photos, category]);
 
   const isFormValid = () => {
     return title.trim().length >= 3 
       && description.trim().length >= 10 
       && price && parseFloat(price) > 0 
       && category 
-      && photos.length > 0
-      && Object.keys(errors).length === 0;
+      && photos.length > 0;
   };
 
   const compressImage = (file: File): Promise<string> => {
