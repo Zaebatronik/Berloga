@@ -1,0 +1,70 @@
+import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { useStore } from '../store';
+import '../styles/MainMenu.css';
+
+export default function MainMenu() {
+  const navigate = useNavigate();
+  const { t } = useTranslation();
+  const { setUser } = useStore();
+
+  const menuItems = [
+    { icon: '📁', label: t('menu.catalog'), path: '/catalog' },
+    { icon: '➕', label: t('menu.addListing'), path: '/add' },
+    { icon: '📋', label: t('menu.myListings'), path: '/my-listings' },
+    { icon: '👤', label: t('menu.profile'), path: '/profile' },
+    { icon: '⭐', label: t('menu.favorites'), path: '/favorites' },
+    { icon: '❓', label: t('menu.support'), path: '/support' },
+  ];
+
+  const handleLogout = () => {
+    if (window.confirm('Вы уверены, что хотите выйти? Придётся пройти регистрацию заново.')) {
+      // Очищаем данные пользователя
+      setUser(null);
+      localStorage.clear();
+      // Переходим на страницу приветствия
+      navigate('/welcome');
+    }
+  };
+
+  return (
+    <div className="main-menu">
+      <div className="menu-header">
+        <h1>🛒 KupyProdai</h1>
+        <button
+          onClick={handleLogout}
+          style={{
+            position: 'absolute',
+            top: '20px',
+            right: '20px',
+            padding: '8px 16px',
+            background: '#fc8181',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            fontSize: '14px',
+            fontWeight: '600',
+            cursor: 'pointer',
+            transition: 'all 0.2s',
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.background = '#f56565')}
+          onMouseLeave={(e) => (e.currentTarget.style.background = '#fc8181')}
+        >
+          🚪 Выйти
+        </button>
+      </div>
+      <div className="menu-grid">
+        {menuItems.map((item) => (
+          <button
+            key={item.path}
+            className="menu-item"
+            onClick={() => navigate(item.path)}
+          >
+            <span className="menu-icon">{item.icon}</span>
+            <span className="menu-label">{item.label}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
