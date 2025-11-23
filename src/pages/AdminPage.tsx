@@ -37,7 +37,7 @@ const MOCK_REPORTS: Report[] = [
 export default function AdminPage() {
   const navigate = useNavigate();
   const { allUsers, listings } = useStore();
-  const [activeTab, setActiveTab] = useState<'stats' | 'users' | 'reports'>('users');
+  const [activeTab, setActiveTab] = useState<'stats' | 'users' | 'banned' | 'reports'>('users');
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [reports, setReports] = useState<Report[]>(MOCK_REPORTS);
 
@@ -202,7 +202,13 @@ export default function AdminPage() {
             className={`tab-btn ${activeTab === 'users' ? 'active' : ''}`}
             onClick={() => setActiveTab('users')}
           >
-            👥 Пользователи
+            👥 Активные ({stats.activeUsers})
+          </button>
+          <button 
+            className={`tab-btn ${activeTab === 'banned' ? 'active' : ''}`}
+            onClick={() => setActiveTab('banned')}
+          >
+            🚫 Забаненные {stats.bannedUsers > 0 && <span className="badge">{stats.bannedUsers}</span>}
           </button>
           <button 
             className={`tab-btn ${activeTab === 'reports' ? 'active' : ''}`}
@@ -245,12 +251,12 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* Пользователи */}
+        {/* Активные пользователи */}
         {activeTab === 'users' && (
           <div className="users-content">
             <div className="users-list">
-              {users.map(user => (
-                <div key={user.id} className={`user-card ${user.status === 'banned' ? 'banned' : ''} ${user.isAdmin ? 'admin-card' : ''}`}>
+              {users.filter(u => u.status === 'active').map(user => (
+                <div key={user.id} className={`user-card ${user.isAdmin ? 'admin-card' : ''}`}>
                   <div className="user-info">
                     <div className="user-header">
                       <span className="user-nickname">
@@ -258,7 +264,6 @@ export default function AdminPage() {
                         {user.nickname}
                       </span>
                       {user.isAdmin && <span className="admin-badge">АДМИНИСТРАТОР</span>}
-                      {user.status === 'banned' && <span className="banned-badge">🚫 Забанен</span>}
                     </div>
                     <div className="user-details">
                       <span>ID: {user.id}</span>
@@ -286,6 +291,47 @@ export default function AdminPage() {
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* Забаненные пользователи */}
+        {activeTab === 'banned' && (
+          <div className="users-content">
+            <div className="users-list">
+              {users.filter(u => u.status === 'banned').length === 0 ? (
+                <div className="empty-state">
+                  <div className="empty-icon">✅</div>
+                  <p>Нет забаненных пользователей</p>
+                </div>
+              ) : (
+                users.filter(u => u.status === 'banned').map(user => (
+                  <div key={user.id} className="user-card banned">
+                    <div className="user-info">
+                      <div className="user-header">
+                        <span className="user-nickname">
+                          {user.nickname}
+                        </span>
+                        <span className="banned-badge">🚫 ЗАБАНЕН</span>
+                      </div>
+                      <div className="user-details">
+                        <span>ID: {user.id}</span>
+                        <span>{user.country} • {user.city}</span>
+                        <span>{user.listingsCount} объявлений</span>
+                        <span>С {user.joinedAt}</span>
+                      </div>
+                    </div>
+                    <div className="user-actions">
+                      <button 
+                        className="action-btn unban-btn"
+                        onClick={() => handleUnbanUser(user.id)}
+                      >
+                        ✅ Разбанить
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         )}
