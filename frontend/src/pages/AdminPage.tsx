@@ -291,22 +291,7 @@ export default function AdminPage() {
           <button className="back-button" onClick={() => navigate('/menu')}>
             ← Назад
           </button>
-          <h1 className="page-title">👑 Админ-панель</h1>
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '8px 16px',
-            background: 'linear-gradient(135deg, #f59e0b, #d97706)',
-            borderRadius: '12px',
-            color: 'white',
-            fontSize: '14px',
-            fontWeight: '700',
-            boxShadow: '0 4px 12px rgba(245, 158, 11, 0.4)',
-            marginLeft: '12px'
-          }}>
-            🚀 ТЕСТОВАЯ ВЕРСИЯ - АВТОДЕПЛОЙ РАБОТАЕТ!
-          </div>
+          }}>🐻 Берлога - Админ-панель</h1>
           {liveUpdating && (
             <div style={{
               display: 'inline-flex',
