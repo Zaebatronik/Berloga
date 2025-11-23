@@ -1,0 +1,6 @@
+# Игнорируем frontend при деплое на Render
+frontend/
+node_modules/
+.git/
+.github/
+*.md
