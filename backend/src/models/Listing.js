@@ -44,7 +44,8 @@ const listingSchema = new mongoose.Schema({
   },
   city: {
     type: String,
-    required: true,
+    required: false,
+    default: 'Не указан',
     index: true,
   },
   photos: {
@@ -53,7 +54,8 @@ const listingSchema = new mongoose.Schema({
   },
   country: {
     type: String,
-    required: true,
+    required: false,
+    default: 'Не указана',
     index: true,
   },
   photos: [{

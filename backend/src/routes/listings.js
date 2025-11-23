@@ -148,13 +148,31 @@ router.post('/', async (req, res) => {
     await listing.save();
     console.log('✅ Объявление создано:', listing._id, listing.serialNumber);
     
+    // Отправляем Socket.IO событие о новом объявлении
+    if (req.app.get('io')) {
+      req.app.get('io').emit('listing-created', listing);
+      console.log('📡 Socket.IO: Отправлено событие listing-created');
+    }
+    
     res.status(201).json(listing);
   } catch (error) {
     console.error('❌ Ошибка создания объявления:', error);
+    console.error('Полная ошибка:', {
+      name: error.name,
+      message: error.message,
+      stack: error.stack,
+      receivedData: {
+        userId: req.body.userId,
+        userNickname: req.body.userNickname,
+        title: req.body.title,
+        city: req.body.city,
+        country: req.body.country,
+      }
+    });
     res.status(500).json({ 
-      message: 'Ошибка сервера', 
+      message: 'Ошибка при создании объявления', 
       error: error.message,
-      details: error.stack
+      details: error.name === 'ValidationError' ? 'Проверьте правильность заполнения всех полей' : 'Внутренняя ошибка сервера'
     });
   }
 });

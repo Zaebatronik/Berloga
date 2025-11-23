@@ -174,22 +174,38 @@ export default function AddListingPage() {
       try {
         console.log('🌐 Отправка на сервер:', {
           url: import.meta.env.VITE_API_URL || 'http://localhost:3001',
-          data: listingData
+          data: {
+            ...listingData,
+            userId: listingData.userId,
+            userNickname: listingData.userNickname,
+            city: listingData.city || user?.city || 'Не указан',
+            country: listingData.country || user?.country || 'Не указана'
+          }
         });
-        const response = await listingsAPI.create(listingData);
+        const response = await listingsAPI.create({
+          ...listingData,
+          city: listingData.city || user?.city || 'Не указан',
+          country: listingData.country || user?.country || 'Не указана'
+        });
         console.log('✅ Объявление сохранено на сервере:', response.data);
+        
+        // Показываем успешное сообщение
+        alert('✅ Объявление успешно опубликовано!');
       } catch (serverError: any) {
         console.error('❌ Ошибка при сохранении на сервер:', {
           message: serverError?.message,
           response: serverError?.response?.data,
           status: serverError?.response?.status,
+          data: serverError?.response?.data
         });
+        
+        const errorMessage = serverError?.response?.data?.message || serverError?.message || 'Неизвестная ошибка';
+        const errorDetails = serverError?.response?.data?.details || '';
+        
         console.warn('⚠️ Объявление сохранено только локально');
         
-        // Показываем пользователю предупреждение
-        if (serverError?.response?.status >= 500) {
-          alert('⚠️ Объявление создано, но возможны проблемы с синхронизацией. Проверьте "Мои объявления".');
-        }
+        // Показываем пользователю подробную ошибку
+        alert(`⚠️ Не удалось опубликовать на сервер:\n\n${errorMessage}\n${errorDetails}\n\nОбъявление сохранено локально. Попробуйте позже или обратитесь к администратору.`);
       }
 
       if (window.Telegram?.WebApp?.HapticFeedback) {
@@ -199,11 +215,10 @@ export default function AddListingPage() {
       // Очищаем черновик после успешной публикации
       clearDraft();
       
-      alert(t('addListing.success'));
       navigate('/my-listings');
-    } catch (error) {
-      console.error('Failed to create listing:', error);
-      alert('Ошибка при создании объявления');
+    } catch (error: any) {
+      console.error('❌ Критическая ошибка при создании объявления:', error);
+      alert(`❌ Ошибка: ${error?.message || 'Не удалось создать объявление'}\n\nПопробуйте еще раз или обратитесь к администратору.`);
     } finally {
       setIsSubmitting(false);
     }
