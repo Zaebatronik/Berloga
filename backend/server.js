@@ -207,12 +207,24 @@ app.get('/listings/:id', async (req, res) => {
 app.post('/listings', async (req, res) => {
   try {
     const {
-      id, serialNumber, userId, userNickname, category,
-      title, description, price, negotiable, city, country,
-      photos, status, views
+      id,
+      serialNumber, serial_number,
+      userId, user_id,
+      userNickname, user_nickname,
+      category, title, description, price, negotiable,
+      city, country, photos, status, views
     } = req.body;
     
-    console.log('📦 Creating listing:', { title, userId });
+    // Поддержка и camelCase и snake_case
+    const finalSerialNumber = serialNumber || serial_number || `SN${Date.now()}`;
+    const finalUserId = userId || user_id;
+    const finalUserNickname = userNickname || user_nickname;
+    
+    console.log('📦 Creating listing:', { 
+      title, 
+      userId: finalUserId, 
+      userNickname: finalUserNickname 
+    });
     
     const result = await pool.query(
       `INSERT INTO listings (
@@ -222,9 +234,20 @@ app.post('/listings', async (req, res) => {
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
       RETURNING *`,
       [
-        id, serialNumber, userId, userNickname, category,
-        title, description, price, negotiable, city, country,
-        photos, status || 'active', views || 0
+        id || `listing_${Date.now()}`,
+        finalSerialNumber,
+        finalUserId,
+        finalUserNickname,
+        category,
+        title,
+        description,
+        price,
+        negotiable || false,
+        city,
+        country,
+        Array.isArray(photos) ? photos : [],
+        status || 'active',
+        views || 0
       ]
     );
     
@@ -232,7 +255,8 @@ app.post('/listings', async (req, res) => {
     res.status(201).json(result.rows[0]);
   } catch (error) {
     console.error('❌ Error creating listing:', error);
-    res.status(500).json({ error: 'Failed to create listing' });
+    console.error('Error details:', error.message);
+    res.status(500).json({ error: 'Failed to create listing', details: error.message });
   }
 });
 
