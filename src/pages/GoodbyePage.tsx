@@ -1,10 +1,8 @@
 import { useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import '../styles/GoodbyePage.css';
 
 export default function GoodbyePage() {
   const navigate = useNavigate();
-  const { t } = useTranslation();
 
   const handleReturn = () => {
     navigate('/', { replace: true });
