@@ -19,7 +19,7 @@ const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } });
 // Получить все объявления
 router.get('/', async (req, res) => {
   try {
-    const { category, city, minPrice, maxPrice, search, status } = req.query;
+    const { category, city, country, minPrice, maxPrice, search, status } = req.query;
     let query = {};
 
     // Показываем только активные по умолчанию (если не указано иное)
@@ -30,6 +30,9 @@ router.get('/', async (req, res) => {
     }
 
     if (category && category !== 'all') query.category = category;
+    
+    // Фильтрация по локации
+    if (country) query.country = country;
     if (city) query.city = city;
     
     // Фильтр по цене
@@ -47,7 +50,7 @@ router.get('/', async (req, res) => {
       ];
     }
 
-    console.log('📋 Запрос объявлений:', query);
+    console.log('📋 Запрос объявлений с фильтрами:', query);
     const listings = await Listing.find(query).sort({ createdAt: -1 }).lean();
     console.log(`✅ Найдено объявлений: ${listings.length}`);
     
@@ -225,6 +228,34 @@ router.delete('/:id', async (req, res) => {
     }
     res.json({ message: 'Объявление удалено' });
   } catch (error) {
+    res.status(500).json({ message: 'Ошибка сервера', error: error.message });
+  }
+});
+
+// Получить список уникальных стран
+router.get('/locations/countries', async (req, res) => {
+  try {
+    const countries = await Listing.distinct('country', { status: 'active' });
+    console.log('🌍 Список стран:', countries);
+    res.json(countries.filter(c => c)); // Фильтруем пустые значения
+  } catch (error) {
+    console.error('❌ Ошибка получения стран:', error);
+    res.status(500).json({ message: 'Ошибка сервера', error: error.message });
+  }
+});
+
+// Получить список уникальных городов для страны
+router.get('/locations/cities', async (req, res) => {
+  try {
+    const { country } = req.query;
+    const query = { status: 'active' };
+    if (country) query.country = country;
+    
+    const cities = await Listing.distinct('city', query);
+    console.log(`🏙️ Список городов ${country ? `в ${country}` : 'всех'}:`, cities);
+    res.json(cities.filter(c => c)); // Фильтруем пустые значения
+  } catch (error) {
+    console.error('❌ Ошибка получения городов:', error);
     res.status(500).json({ message: 'Ошибка сервера', error: error.message });
   }
 });

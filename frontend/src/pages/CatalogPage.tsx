@@ -40,7 +40,7 @@ export default function CatalogPage() {
   const socketRef = useRef<Socket | null>(null);
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { listings: storeListings } = useStore();
+  const { listings: storeListings, user } = useStore();
   
   const [listings, setListings] = useState<Listing[]>([]);
   const [filteredListings, setFilteredListings] = useState<Listing[]>([]);
@@ -52,6 +52,12 @@ export default function CatalogPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [showFilter, setShowFilter] = useState(false);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
+
+  // Фильтры локации
+  const [selectedCountry, setSelectedCountry] = useState<string>(user?.country || '');
+  const [selectedCity, setSelectedCity] = useState<string>(user?.city || '');
+  const [availableCountries, setAvailableCountries] = useState<string[]>([]);
+  const [availableCities, setAvailableCities] = useState<string[]>([]);
 
   // Фильтры
   const [priceMin, setPriceMin] = useState('');
@@ -68,6 +74,40 @@ export default function CatalogPage() {
     }
   }, []);
 
+  // Загрузка списка стран
+  useEffect(() => {
+    const loadCountries = async () => {
+      try {
+        const { listingsAPI } = await import('../services/api');
+        const response = await listingsAPI.getCountries();
+        setAvailableCountries(response.data);
+        console.log('🌍 Загружены страны:', response.data);
+      } catch (error) {
+        console.error('❌ Ошибка загрузки стран:', error);
+      }
+    };
+    loadCountries();
+  }, []);
+
+  // Загрузка списка городов при смене страны
+  useEffect(() => {
+    const loadCities = async () => {
+      if (!selectedCountry) {
+        setAvailableCities([]);
+        return;
+      }
+      try {
+        const { listingsAPI } = await import('../services/api');
+        const response = await listingsAPI.getCities(selectedCountry);
+        setAvailableCities(response.data);
+        console.log(`🏙️ Загружены города для ${selectedCountry}:`, response.data);
+      } catch (error) {
+        console.error('❌ Ошибка загрузки городов:', error);
+      }
+    };
+    loadCities();
+  }, [selectedCountry]);
+
   // Загрузка данных с сервера + live-обновление через Socket.IO
   useEffect(() => {
     let isMounted = true;
@@ -75,7 +115,13 @@ export default function CatalogPage() {
       setLoading(true);
       try {
         const { listingsAPI } = await import('../services/api');
-        const response = await listingsAPI.getAll();
+        // Передаём параметры фильтрации
+        const params: any = {};
+        if (selectedCountry) params.country = selectedCountry;
+        if (selectedCity) params.city = selectedCity;
+        
+        console.log('🔍 Загрузка объявлений с фильтрами:', params);
+        const response = await listingsAPI.getAll(params);
         const serverListings = response.data;
         const formattedListings = serverListings.map((l: any) => ({
           id: l.id,
@@ -154,7 +200,7 @@ export default function CatalogPage() {
         socketRef.current = null;
       }
     };
-  }, [storeListings]);
+  }, [storeListings, selectedCountry, selectedCity]);
 
   // Фильтрация и сортировка
   useEffect(() => {
@@ -567,6 +613,74 @@ export default function CatalogPage() {
             </div>
 
             <div className="filter-body">
+              <div className="filter-section">
+                <div className="filter-section-title">🌍 Локация</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <select
+                    value={selectedCountry}
+                    onChange={(e) => {
+                      setSelectedCountry(e.target.value);
+                      setSelectedCity(''); // Сбрасываем город при смене страны
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      borderRadius: '12px',
+                      border: '1px solid #ddd',
+                      fontSize: '14px',
+                      background: 'white',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <option value="">Все страны</option>
+                    {availableCountries.map(country => (
+                      <option key={country} value={country}>{country}</option>
+                    ))}
+                  </select>
+                  <select
+                    value={selectedCity}
+                    onChange={(e) => setSelectedCity(e.target.value)}
+                    disabled={!selectedCountry}
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      borderRadius: '12px',
+                      border: '1px solid #ddd',
+                      fontSize: '14px',
+                      background: selectedCountry ? 'white' : '#f5f5f5',
+                      cursor: selectedCountry ? 'pointer' : 'not-allowed'
+                    }}
+                  >
+                    <option value="">Все города</option>
+                    {availableCities.map(city => (
+                      <option key={city} value={city}>{city}</option>
+                    ))}
+                  </select>
+                  {user && (
+                    <button
+                      onClick={() => {
+                        setSelectedCountry(user.country);
+                        setSelectedCity(user.city);
+                      }}
+                      style={{
+                        padding: '8px 12px',
+                        borderRadius: '8px',
+                        border: 'none',
+                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                        color: 'white',
+                        fontSize: '12px',
+                        cursor: 'pointer',
+                        transition: 'transform 0.2s'
+                      }}
+                      onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
+                      onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                    >
+                      📍 Мой город ({user.city}, {user.country})
+                    </button>
+                  )}
+                </div>
+              </div>
+
               <div className="filter-section">
                 <div className="filter-section-title">💰 Цена, ₽</div>
                 <div className="price-inputs">

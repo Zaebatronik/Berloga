@@ -59,6 +59,8 @@ export const listingsAPI = {
   delete: (id: string) => api.delete(`/listings/${id}`),
   updateStatus: (id: string, status: string) =>
     api.patch(`/listings/${id}`, { status }),
+  getCountries: () => api.get('/listings/locations/countries'),
+  getCities: (country: string) => api.get('/listings/locations/cities', { params: { country } }),
 };
 
 export const chatsAPI = {
