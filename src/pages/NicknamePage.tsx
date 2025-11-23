@@ -58,6 +58,7 @@ export default function NicknamePage() {
           radius,
           language,
           contacts: {},
+          registrationDate: new Date().toISOString(),
         };
 
         const response = await userAPI.register(userData);
@@ -74,6 +75,7 @@ export default function NicknamePage() {
           language,
           contacts: {},
           createdAt: new Date(),
+          registrationDate: new Date().toISOString(),
         };
       }
 
