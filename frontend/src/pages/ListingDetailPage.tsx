@@ -6,7 +6,6 @@ import type { Listing } from '../types';
 export default function ListingDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { t } = useTranslation();
   
   const [listing, setListing] = useState<Listing | null>(null);
   const [loading, setLoading] = useState(true);
@@ -23,8 +22,8 @@ export default function ListingDetailPage() {
 
       try {
         const { listingsAPI } = await import('../services/api');
-        const data = await listingsAPI.getById(id);
-        setListing(data);
+        const response = await listingsAPI.getById(id);
+        setListing(response.data);
       } catch (err: any) {
         console.error('Ошибка загрузки объявления:', err);
         setError(err.message || 'Не удалось загрузить объявление');
