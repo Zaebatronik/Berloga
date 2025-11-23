@@ -36,7 +36,7 @@ export default function MyListingsPage() {
         const userId = user.telegramId || user.id;
         console.log('📋 Загрузка объявлений пользователя:', userId);
         
-        const response = await listingsAPI.getByUserId(userId);
+        const response = await listingsAPI.getByUser(userId);
         const serverListings = response.data;
         console.log('✅ Получено объявлений с сервера:', serverListings.length);
         
