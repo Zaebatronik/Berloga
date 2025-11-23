@@ -90,12 +90,38 @@ export default function NicknamePage() {
       // Переходим на главную СРАЗУ
       navigate('/');
       
-      // Пытаемся отправить на сервер в фоне (не блокируем UI)
-      userAPI.register(userData).then(response => {
-        console.log('✅ Данные отправлены на сервер:', response.data);
-      }).catch(error => {
-        console.log('⚠️ Не удалось отправить на сервер, но регистрация локально выполнена:', error);
-      });
+      // Умная система повторных попыток отправки на сервер
+      const attemptServerRegistration = async (attempts = 0, maxAttempts = 5) => {
+        try {
+          console.log(`📤 Попытка ${attempts + 1}/${maxAttempts} отправки на сервер...`);
+          const response = await userAPI.register(userData);
+          console.log('✅ Пользователь зарегистрирован на сервере:', response.data);
+          // Удаляем из очереди ожидания
+          localStorage.removeItem('pendingRegistration');
+          return true;
+        } catch (error: any) {
+          console.log(`⚠️ Попытка ${attempts + 1} не удалась:`, error.message);
+          
+          if (attempts < maxAttempts - 1) {
+            // Ждём с экспоненциальной задержкой: 5s, 10s, 20s, 40s
+            const delay = Math.min(5000 * Math.pow(2, attempts), 60000);
+            console.log(`⏳ Повтор через ${delay/1000} секунд...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            return attemptServerRegistration(attempts + 1, maxAttempts);
+          } else {
+            console.log('❌ Все попытки исчерпаны. Данные сохранены в очереди.');
+            // Сохраняем в очередь для повторной попытки позже
+            localStorage.setItem('pendingRegistration', JSON.stringify({
+              userData,
+              timestamp: Date.now()
+            }));
+            return false;
+          }
+        }
+      };
+      
+      // Запускаем в фоне
+      attemptServerRegistration();
     } catch (err: any) {
       setError(err.response?.data?.message || t('common.error'));
     } finally {

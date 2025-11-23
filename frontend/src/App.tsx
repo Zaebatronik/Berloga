@@ -38,6 +38,34 @@ function App() {
 
     // Установка языка
     i18n.changeLanguage(language);
+
+    // Проверка и отправка отложенных регистраций
+    const processPendingRegistration = async () => {
+      const pending = localStorage.getItem('pendingRegistration');
+      if (pending) {
+        try {
+          const { userData, timestamp } = JSON.parse(pending);
+          const hoursSince = (Date.now() - timestamp) / (1000 * 60 * 60);
+          
+          // Если прошло больше 24 часов, очищаем
+          if (hoursSince > 24) {
+            console.log('🗑️ Очередь регистрации устарела (>24ч), удаляем');
+            localStorage.removeItem('pendingRegistration');
+            return;
+          }
+          
+          console.log('📤 Найдена отложенная регистрация, отправляем на сервер...');
+          const { userAPI } = await import('./services/api');
+          const response = await userAPI.register(userData);
+          console.log('✅ Отложенная регистрация выполнена:', response.data);
+          localStorage.removeItem('pendingRegistration');
+        } catch (error) {
+          console.log('⚠️ Не удалось отправить отложенную регистрацию, попробуем позже');
+        }
+      }
+    };
+
+    processPendingRegistration();
   }, [language, i18n]);
 
   // Проверка бана при загрузке приложения
