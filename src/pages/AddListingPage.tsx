@@ -93,11 +93,24 @@ export default function AddListingPage() {
 
       // Отправляем на сервер
       try {
+        console.log('🌐 Отправка на сервер:', {
+          url: import.meta.env.VITE_API_URL || 'http://localhost:3001',
+          data: listing
+        });
         const response = await listingsAPI.create(listing);
         console.log('✅ Объявление сохранено на сервере:', response.data);
-      } catch (serverError) {
-        console.error('❌ Ошибка при сохранении на сервер:', serverError);
+      } catch (serverError: any) {
+        console.error('❌ Ошибка при сохранении на сервер:', {
+          message: serverError?.message,
+          response: serverError?.response?.data,
+          status: serverError?.response?.status,
+        });
         console.warn('⚠️ Объявление сохранено только локально');
+        
+        // Показываем пользователю предупреждение
+        if (serverError?.response?.status >= 500) {
+          alert('⚠️ Объявление создано, но возможны проблемы с синхронизацией. Проверьте "Мои объявления".');
+        }
       }
 
       if (window.Telegram?.WebApp?.HapticFeedback) {
