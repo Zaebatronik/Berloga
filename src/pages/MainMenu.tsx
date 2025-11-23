@@ -8,6 +8,11 @@ export default function MainMenu() {
   const { t } = useTranslation();
   const { setUser } = useStore();
 
+  // ID админа
+  const ADMIN_ID = '123456789'; // Замените на ваш реальный Telegram ID
+  const currentUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() || '';
+  const isAdmin = currentUserId === ADMIN_ID;
+
   const menuItems = [
     { icon: '📁', label: t('menu.catalog'), path: '/catalog' },
     { icon: '➕', label: t('menu.addListing'), path: '/add' },
@@ -15,6 +20,7 @@ export default function MainMenu() {
     { icon: '👤', label: t('menu.profile'), path: '/profile' },
     { icon: '⭐', label: t('menu.favorites'), path: '/favorites' },
     { icon: '❓', label: t('menu.support'), path: '/support' },
+    ...(isAdmin ? [{ icon: '👑', label: 'Админ-панель', path: '/admin' }] : []),
   ];
 
   const handleLogout = () => {
