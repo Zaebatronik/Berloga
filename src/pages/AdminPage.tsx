@@ -37,7 +37,7 @@ const MOCK_REPORTS: Report[] = [
 export default function AdminPage() {
   const navigate = useNavigate();
   const { allUsers, listings } = useStore();
-  const [activeTab, setActiveTab] = useState<'stats' | 'users' | 'banned' | 'reports'>('users');
+  const [activeTab, setActiveTab] = useState<'stats' | 'all' | 'users' | 'banned' | 'reports'>('users');
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [reports, setReports] = useState<Report[]>(MOCK_REPORTS);
 
@@ -144,6 +144,15 @@ export default function AdminPage() {
     };
   }, [allUsers, listings]);
 
+  // Вычисляем статистику
+  const stats = {
+    totalUsers: users.length,
+    activeUsers: users.filter(u => u.status === 'active').length,
+    bannedUsers: users.filter(u => u.status === 'banned').length,
+    totalListings: listings.length,
+    pendingReports: reports.filter(r => r.status === 'pending').length,
+  };
+
   // Проверка доступа (в реальном приложении это будет на бэкенде)
   const currentUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() || '123456789';
   const isAdmin = currentUserId === ADMIN_ID;
@@ -227,6 +236,14 @@ export default function AdminPage() {
     }
   };
 
+  // Обработчик клика по статистике
+  const handleStatClick = (tab: 'all' | 'users' | 'banned') => {
+    setActiveTab(tab);
+    if (window.Telegram?.WebApp?.HapticFeedback) {
+      window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+    }
+  };
+
   const handleResolveReport = (reportId: string, status: 'resolved' | 'rejected') => {
     setReports(prev => prev.map(r => 
       r.id === reportId ? { ...r, status } : r
@@ -234,14 +251,6 @@ export default function AdminPage() {
     if (window.Telegram?.WebApp?.HapticFeedback) {
       window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
     }
-  };
-
-  const stats = {
-    totalUsers: users.length,
-    activeUsers: users.filter(u => u.status === 'active').length,
-    bannedUsers: users.filter(u => u.status === 'banned').length,
-    totalListings: users.reduce((sum, u) => sum + u.listingsCount, 0),
-    pendingReports: reports.filter(r => r.status === 'pending').length,
   };
 
   return (
@@ -286,20 +295,23 @@ export default function AdminPage() {
         {activeTab === 'stats' && (
           <div className="stats-content">
             <div className="stats-grid">
-              <div className="stat-card">
+              <div className="stat-card clickable" onClick={() => handleStatClick('all')}>
                 <div className="stat-icon">👥</div>
                 <div className="stat-value">{stats.totalUsers}</div>
                 <div className="stat-label">Всего пользователей</div>
+                <div className="stat-hint">👆 Нажми чтобы посмотреть</div>
               </div>
-              <div className="stat-card">
+              <div className="stat-card clickable" onClick={() => handleStatClick('users')}>
                 <div className="stat-icon">✅</div>
                 <div className="stat-value">{stats.activeUsers}</div>
                 <div className="stat-label">Активных</div>
+                <div className="stat-hint">👆 Нажми чтобы посмотреть</div>
               </div>
-              <div className="stat-card">
+              <div className="stat-card clickable" onClick={() => handleStatClick('banned')}>
                 <div className="stat-icon">🚫</div>
                 <div className="stat-value">{stats.bannedUsers}</div>
                 <div className="stat-label">Забанено</div>
+                <div className="stat-hint">👆 Нажми чтобы посмотреть</div>
               </div>
               <div className="stat-card">
                 <div className="stat-icon">📦</div>
@@ -311,6 +323,58 @@ export default function AdminPage() {
                 <div className="stat-value">{stats.pendingReports}</div>
                 <div className="stat-label">Новых жалоб</div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Все пользователи */}
+        {activeTab === 'all' && (
+          <div className="users-content">
+            <div className="section-header">
+              <h3>👨‍👩‍👧‍👦 Все пользователи ({users.length})</h3>
+              <p className="section-hint">Активные и забаненные</p>
+            </div>
+            <div className="users-list">
+              {users.map(user => (
+                <div key={user.id} className={`user-card ${user.isAdmin ? 'admin-card' : ''} ${user.status === 'banned' ? 'banned' : ''}`}>
+                  <div className="user-info">
+                    <div className="user-header">
+                      <span className="user-nickname">
+                        {user.isAdmin && '👑 '}
+                        {user.status === 'banned' && '🚫 '}
+                        {user.nickname}
+                      </span>
+                      {user.isAdmin && <span className="admin-badge">АДМИНИСТРАТОР</span>}
+                      {user.status === 'banned' && <span className="banned-badge">ЗАБАНЕН</span>}
+                    </div>
+                    <div className="user-details">
+                      <span>ID: {user.id}</span>
+                      <span>{user.country} • {user.city}</span>
+                      <span>{user.listingsCount} объявлений</span>
+                      <span>С {user.joinedAt}</span>
+                    </div>
+                  </div>
+                  <div className="user-actions">
+                    {!user.isAdmin && (
+                      user.status === 'active' ? (
+                        <button 
+                          className="action-btn ban-btn"
+                          onClick={() => handleBanUser(user.id)}
+                        >
+                          🚫 Забанить
+                        </button>
+                      ) : (
+                        <button 
+                          className="action-btn unban-btn"
+                          onClick={() => handleUnbanUser(user.id)}
+                        >
+                          ✅ Разбанить
+                        </button>
+                      )
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}
