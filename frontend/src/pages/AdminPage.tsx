@@ -98,8 +98,8 @@ export default function AdminPage() {
     const loadUsers = async (isInitial = false) => {
       if (!isSubscribed) return;
       try {
-        const { userAPI } = await import('../services/api');
-        console.log('🔍 AdminPage: Загрузка пользователей с сервера...');
+        const { userAPI, listingsAPI } = await import('../services/api');
+        console.log('🔍 AdminPage: Загрузка пользователей и объявлений с сервера...');
         
         if (isInitial) {
           setLogs(lgs => [
@@ -108,19 +108,32 @@ export default function AdminPage() {
           ]);
         }
         
-        const response = await userAPI.getAll();
-        console.log('📦 AdminPage: Получен ответ от сервера:', response.data);
-        const serverUsers = response.data;
+        // Загружаем и пользователей, и объявления параллельно
+        const [usersResponse, listingsResponse] = await Promise.all([
+          userAPI.getAll(),
+          listingsAPI.getAllForAdmin()
+        ]);
+        
+        console.log('📦 AdminPage: Получен ответ от сервера:', usersResponse.data);
+        const serverUsers = usersResponse.data;
+        const serverListings = listingsResponse.data;
+        
         if (!isSubscribed) return;
-        console.log(`👥 AdminPage: Обрабатываю ${serverUsers.length} пользователей`);
+        console.log(`👥 AdminPage: Обрабатываю ${serverUsers.length} пользователей и ${serverListings.length} объявлений`);
+        
         const newAdminUsers: AdminUser[] = serverUsers.map((user: any) => {
           // Используем telegramId как основной ID (если есть), иначе _id из MongoDB
           const userId = user.telegramId || user._id || user.id;
+          
+          // Считаем объявления по userId из сервера
+          const userListingsCount = serverListings.filter((l: any) => l.userId === userId).length;
+          
           console.log('🔍 Маппинг пользователя:', {
             telegramId: user.telegramId,
             _id: user._id,
             nickname: user.nickname,
-            finalId: userId
+            finalId: userId,
+            listingsCount: userListingsCount
           });
           
           return {
@@ -128,7 +141,7 @@ export default function AdminPage() {
             nickname: user.nickname,
             country: user.country,
             city: user.city,
-            listingsCount: listings.filter((l) => l.userId === userId).length,
+            listingsCount: userListingsCount,
             joinedAt: user.createdAt ? new Date(user.createdAt).toLocaleDateString('ru-RU') : 
                       user.created_at ? new Date(user.created_at).toLocaleDateString('ru-RU') : 'Неизвестно',
             status: user.banned ? 'banned' : 'active',
