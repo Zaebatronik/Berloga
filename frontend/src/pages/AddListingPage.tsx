@@ -59,7 +59,7 @@ export default function AddListingPage() {
     }
   }, []);
 
-  // Конвертация цены в локальную валюту
+  // Конвертация цены из локальной валюты в USD для предпросмотра
   useEffect(() => {
     const convertPrice = async () => {
       if (price && user?.country) {
@@ -67,9 +67,9 @@ export default function AddListingPage() {
         if (!isNaN(priceNum) && priceNum > 0) {
           const localCurrency = currencyService.getCurrencyByCountry(user.country);
           if (localCurrency !== 'USD') {
-            const converted = await currencyService.convertFromUSD(priceNum, localCurrency);
-            const symbol = currencyService.getCurrencySymbol(localCurrency);
-            setLocalPrice(`≈ ${symbol}${Math.round(converted).toLocaleString()}`);
+            // Конвертируем из локальной валюты в USD
+            const convertedUSD = await currencyService.convertToUSD(priceNum, localCurrency);
+            setLocalPrice(`≈ $${convertedUSD.toFixed(2)}`);
           } else {
             setLocalPrice('');
           }
@@ -223,13 +223,23 @@ export default function AddListingPage() {
       // Используем telegramId как основной ID (если есть) или id
       const userId = user?.telegramId || user?.id || 'unknown';
       
+      // Конвертируем цену из локальной валюты в USD для хранения
+      let priceInUSD = parseFloat(price);
+      if (user?.country) {
+        const localCurrency = currencyService.getCurrencyByCountry(user.country);
+        if (localCurrency !== 'USD') {
+          priceInUSD = await currencyService.convertToUSD(parseFloat(price), localCurrency);
+          console.log(`💱 Конвертация: ${price} ${localCurrency} = $${priceInUSD.toFixed(2)} USD`);
+        }
+      }
+      
       const listingData = {
         userId: userId, // Telegram ID пользователя
         userNickname: user?.nickname || 'Anonymous',
         category,
         title: title.trim(),
         description: description.trim(),
-        price: parseFloat(price),
+        price: priceInUSD, // Сохраняем в USD
         negotiable,
         city: user?.city || 'Не указан',
         country: user?.country || 'RU',
@@ -514,7 +524,7 @@ export default function AddListingPage() {
             {/* Цена */}
             <div className="form-section">
               <label className="section-label">
-                {t('addListing.price')} (в долларах USA)
+                {t('addListing.price')} ({user?.country ? `в ${currencyService.getCurrencySymbol(currencyService.getCurrencyByCountry(user.country))}` : 'в вашей валюте'})
                 {errors.price && <span style={{ color: '#ef4444', marginLeft: '8px', fontSize: '13px' }}>⚠️ {errors.price}</span>}
               </label>
               <div className="price-input-wrapper">
@@ -527,11 +537,13 @@ export default function AddListingPage() {
                   min="0"
                   step="0.01"
                 />
-                <span className="currency">$</span>
+                <span className="currency">
+                  {user?.country ? currencyService.getCurrencySymbol(currencyService.getCurrencyByCountry(user.country)) : '$'}
+                </span>
               </div>
               {localPrice && (
                 <div style={{ fontSize: '14px', color: '#667eea', marginTop: '8px', fontWeight: '500' }}>
-                  💱 В вашей валюте: {localPrice}
+                  💱 В долларах: {localPrice}
                 </div>
               )}
               <label className="checkbox-label">

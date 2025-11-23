@@ -1,15 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useStore } from '../store';
 import type { Listing } from '../types';
 
 export default function ListingDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useStore();
   
   const [listing, setListing] = useState<Listing | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [error, setError] = useState('');
+  const [displayPrice, setDisplayPrice] = useState('');
 
   useEffect(() => {
     const loadListing = async () => {
@@ -22,7 +25,18 @@ export default function ListingDetailPage() {
       try {
         const { listingsAPI } = await import('../services/api');
         const response = await listingsAPI.getById(id);
-        setListing(response.data);
+        const listingData = response.data;
+        setListing(listingData);
+        
+        // Конвертируем цену для покупателя
+        if (listingData.price && user?.country) {
+          const { currencyService } = await import('../services/currency');
+          const formattedPrice = await currencyService.formatDualPrice(
+            listingData.price,
+            user.country
+          );
+          setDisplayPrice(formattedPrice);
+        }
       } catch (err: any) {
         console.error('Ошибка загрузки объявления:', err);
         setError(err.message || 'Не удалось загрузить объявление');
@@ -268,7 +282,7 @@ export default function ListingDetailPage() {
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent'
             }}>
-              {listing.price ? `${listing.price} ₽` : 'Договорная'}
+              {listing.price ? (displayPrice || `$${listing.price}`) : 'Договорная'}
             </h1>
             {listing.negotiable && (
               <span style={{
