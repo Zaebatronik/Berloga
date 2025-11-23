@@ -32,8 +32,8 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Serve static files from frontend
-const frontendPath = path.join(__dirname, '../../frontend/dist');
+// Serve static files from frontend (dist in root)
+const frontendPath = path.join(__dirname, '../../dist');
 app.use(express.static(frontendPath));
 
 // All other routes return the index.html (SPA)
