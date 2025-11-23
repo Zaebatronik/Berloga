@@ -38,6 +38,22 @@ export default function NicknamePage() {
       const city = localStorage.getItem('registrationCity') || '';
       const radius = parseInt(localStorage.getItem('registrationRadius') || '0');
 
+      // Получаем Telegram ID пользователя
+      const telegramId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() || `local_${Date.now()}`;
+
+      // Создаём данные пользователя
+      const userData = {
+        id: telegramId,
+        nickname,
+        country: country.code || 'RU',
+        city,
+        radius,
+        language,
+        contacts: {},
+        createdAt: new Date().toISOString(),
+        registrationDate: new Date().toISOString(),
+      };
+
       let user: User;
 
       // Пытаемся зарегистрировать через API
@@ -50,32 +66,19 @@ export default function NicknamePage() {
           return;
         }
 
-        // Регистрация пользователя
-        const userData = {
-          nickname,
-          country: country.code || 'RU',
-          city,
-          radius,
-          language,
-          contacts: {},
-          registrationDate: new Date().toISOString(),
-        };
-
+        // Регистрация пользователя на сервере
         const response = await userAPI.register(userData);
-        user = response.data;
+        user = {
+          ...response.data,
+          createdAt: new Date(response.data.createdAt),
+        };
+        console.log('User registered on server:', user);
       } catch (apiError) {
         // Если API недоступен, создаём пользователя локально
         console.warn('API unavailable, creating user locally:', apiError);
         user = {
-          id: `local_${Date.now()}`,
-          nickname,
-          country: country.code || 'RU',
-          city,
-          radius,
-          language,
-          contacts: {},
+          ...userData,
           createdAt: new Date(),
-          registrationDate: new Date().toISOString(),
         };
       }
 
@@ -83,14 +86,6 @@ export default function NicknamePage() {
       setUser(user);
       // Добавляем в общий реестр для админа (локально)
       addUserToRegistry(user);
-
-      // Отправляем на сервер (если доступен)
-      try {
-        await userAPI.register(user);
-        console.log('User saved to server');
-      } catch (serverError) {
-        console.warn('Server unavailable, user saved locally only:', serverError);
-      }
 
       // Очищаем temporary data
       localStorage.removeItem('registrationCountry');
