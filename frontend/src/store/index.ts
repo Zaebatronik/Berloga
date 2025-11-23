@@ -135,6 +135,59 @@ export const useStore = create<AppState>()(
     }),
     {
       name: 'kupyprodai-storage',
+      // Обработка ошибок переполнения localStorage
+      storage: {
+        getItem: (name) => {
+          try {
+            const str = localStorage.getItem(name);
+            return str ? JSON.parse(str) : null;
+          } catch (e) {
+            console.error('❌ Ошибка чтения из localStorage:', e);
+            return null;
+          }
+        },
+        setItem: (name, value) => {
+          try {
+            localStorage.setItem(name, JSON.stringify(value));
+          } catch (e) {
+            console.error('❌ Ошибка записи в localStorage (возможно переполнен):', e);
+            // Очищаем старые объявления если переполнен
+            if (e instanceof Error && e.message.includes('quota')) {
+              console.warn('⚠️ localStorage переполнен! Очищаем старые данные...');
+              try {
+                const currentState = JSON.parse(localStorage.getItem(name) || '{}');
+                // Сохраняем только пользователя и избранное, без объявлений
+                const cleanState = {
+                  state: {
+                    user: currentState.state?.user,
+                    isRegistered: currentState.state?.isRegistered,
+                    favorites: currentState.state?.favorites,
+                    language: currentState.state?.language,
+                    allUsers: currentState.state?.allUsers,
+                    listings: [], // Очищаем объявления
+                    chats: [], // Очищаем чаты
+                    filters: currentState.state?.filters
+                  },
+                  version: currentState.version
+                };
+                localStorage.setItem(name, JSON.stringify(cleanState));
+                console.log('✅ localStorage очищен, пробуем снова...');
+                // Пробуем сохранить снова
+                localStorage.setItem(name, JSON.stringify(value));
+              } catch (cleanError) {
+                console.error('❌ Не удалось очистить localStorage:', cleanError);
+              }
+            }
+          }
+        },
+        removeItem: (name) => {
+          try {
+            localStorage.removeItem(name);
+          } catch (e) {
+            console.error('❌ Ошибка удаления из localStorage:', e);
+          }
+        },
+      },
     }
   )
 );

@@ -132,8 +132,8 @@ export default function AddListingPage() {
           canvas.height = height;
           ctx?.drawImage(img, 0, 0, width, height);
           
-          // Сжатие до 70% качества
-          const compressed = canvas.toDataURL('image/jpeg', 0.7);
+          // Сжатие до 60% качества для меньшего размера
+          const compressed = canvas.toDataURL('image/jpeg', 0.6);
           resolve(compressed);
         };
         img.onerror = reject;
@@ -211,9 +211,9 @@ export default function AddListingPage() {
         photosCount: photos.length
       });
       
-      // Сохраняем локально
-      addListing(listing);
-      console.log('✅ Объявление сохранено локально');
+      // НЕ сохраняем локально чтобы не переполнить localStorage
+      // addListing(listing); 
+      console.log('⏭️ Пропускаем локальное сохранение (большие фото)');
 
       // Отправляем на сервер (только данные, без локальных ID)
       try {
