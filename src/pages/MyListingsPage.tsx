@@ -37,12 +37,11 @@ export default function MyListingsPage() {
       category: l.category,
       status: l.status === 'active' ? 'active' : 'hidden' as 'active' | 'hidden' | 'sold',
       views: l.views,
-      favorites: l.favoritesCount || 0,
+      favorites: 0,
       createdAt: new Date(l.createdAt).toLocaleDateString('ru-RU')
     }));
     setListings(formatted);
   }, [myListings]);
-  const [filter, setFilter] = useState<'all' | 'active' | 'hidden' | 'sold'>('all');
 
   const filteredListings = filter === 'all' 
     ? listings 

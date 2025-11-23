@@ -30,6 +30,7 @@ export default function AddListingPage() {
   const [price, setPrice] = useState('');
   const [category, setCategory] = useState('');
   const [photos, setPhotos] = useState<string[]>([]);
+  const [negotiable, setNegotiable] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handlePhotoSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -80,9 +81,8 @@ export default function AddListingPage() {
         photos,
         status: 'active' as const,
         views: 0,
-        favoritesCount: 0,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
 
       // Сохраняем локально
@@ -217,6 +217,15 @@ export default function AddListingPage() {
             <span className="currency">₽</span>
           </div>
           <div className="price-hint">{t('addListing.priceHint')}</div>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '12px', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={negotiable}
+              onChange={(e) => setNegotiable(e.target.checked)}
+              style={{ width: '18px', height: '18px' }}
+            />
+            <span>{t('addListing.negotiable') || 'Торг уместен'}</span>
+          </label>
         </div>
 
         {/* Кнопка публикации */}
