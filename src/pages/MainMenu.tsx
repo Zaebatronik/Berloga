@@ -33,8 +33,8 @@ export default function MainMenu() {
       // Очищаем данные пользователя и состояние регистрации
       clearUser();
       localStorage.clear();
-      // Переходим на главную страницу
-      navigate('/', { replace: true });
+      // Переходим на страницу прощания
+      navigate('/goodbye', { replace: true });
     }
   };
 
