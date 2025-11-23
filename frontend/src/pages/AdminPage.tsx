@@ -47,6 +47,18 @@ export default function AdminPage() {
   const [liveUpdating, setLiveUpdating] = useState(false);
   const socketRef = useRef<Socket | null>(null);
 
+  // Проверка доступа: только админ может видеть эту страницу
+  useEffect(() => {
+    const telegramId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString();
+    console.log('🔐 Проверка доступа к админ-панели:', { telegramId, ADMIN_ID });
+    
+    if (!telegramId || telegramId !== ADMIN_ID) {
+      console.log('❌ Доступ запрещён - не админ');
+      navigate('/');
+      return;
+    }
+  }, [navigate]);
+
   // Загрузка локальных пользователей
   const loadLocalUsers = () => {
     console.log('💾 Загрузка локальных пользователей из store:', allUsers);
@@ -197,6 +209,15 @@ export default function AdminPage() {
       const backendUrl = import.meta.env.VITE_API_URL?.replace(/\/api$/, '') || 'http://localhost:5000';
       socketRef.current = io(backendUrl, { transports: ['websocket'] });
       socketRef.current.on('connect', () => setLogs(lgs => ['🟢 Socket.IO connected (AdminPage)', ...lgs]));
+      
+      // Новый пользователь зарегистрировался
+      socketRef.current.on('user-registered', (newUser) => {
+        setLogs(lgs => [`🎉 Новый пользователь зарегистрирован: ${newUser.nickname}`, ...lgs]);
+        setLiveUpdating(true);
+        loadUsers(false);
+        setTimeout(() => setLiveUpdating(false), 2000);
+      });
+      
       socketRef.current.on('user-updated', () => {
         setLogs(lgs => ['🔔 Получено событие user-updated, обновляю пользователей...', ...lgs]);
         setLiveUpdating(true);

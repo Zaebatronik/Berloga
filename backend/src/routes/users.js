@@ -40,6 +40,7 @@ router.post('/register', async (req, res) => {
 
     // Проверка существующего пользователя по Telegram ID
     let user = await User.findOne({ telegramId: id });
+    let isNewUser = false;
     
     if (user) {
       console.log('👤 Пользователь уже существует, обновляем данные');
@@ -52,6 +53,13 @@ router.post('/register', async (req, res) => {
       user.language = language;
       user.contacts = contacts || {};
       await user.save();
+      
+      // Отправляем Socket.IO событие об обновлении
+      if (req.app.get('io')) {
+        req.app.get('io').emit('user-updated', user);
+        console.log('📡 Socket.IO: Отправлено событие user-updated');
+      }
+      
       return res.json(user);
     }
 
@@ -74,6 +82,8 @@ router.post('/register', async (req, res) => {
     });
 
     await user.save();
+    isNewUser = true;
+    
     console.log('✅ Пользователь создан в БД:', {
       _id: user._id,
       telegramId: user.telegramId,
@@ -89,6 +99,13 @@ router.post('/register', async (req, res) => {
     }
     
     console.log('✅ Подтверждение: пользователь найден в БД');
+    
+    // Отправляем Socket.IO событие о новом пользователе
+    if (req.app.get('io')) {
+      req.app.get('io').emit('user-registered', savedUser);
+      console.log('📡 Socket.IO: Отправлено событие user-registered для всех подключенных клиентов');
+    }
+    
     res.status(201).json(user);
   } catch (error) {
     console.error('❌ Ошибка регистрации:', error);

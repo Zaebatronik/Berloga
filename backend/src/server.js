@@ -20,6 +20,9 @@ app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static('uploads'));
 
+// Делаем io доступным для всех роутов
+app.set('io', io);
+
 // Routes - добавляем как с префиксом /api, так и без для совместимости
 const usersRouter = require('./routes/users');
 const listingsRouter = require('./routes/listings');
