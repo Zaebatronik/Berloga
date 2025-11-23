@@ -31,10 +31,8 @@ export default function NicknamePage() {
 
   const handleFinish = async () => {
     if (!validateNickname(nickname)) return;
-    if (nicknameAvailable === false) {
-      setError(t('registration.nicknameTaken'));
-      return;
-    }
+    
+    // Убираем блокировку - пусть сервер проверит при регистрации
     setLoading(true);
     setError('');
     try {
@@ -119,10 +117,17 @@ export default function NicknamePage() {
       try {
         const checkResponse = await userAPI.checkNickname(nickname);
         setNicknameAvailable(checkResponse.data.available);
-        setError(checkResponse.data.available ? '' : t('registration.nicknameTaken'));
+        // Показываем предупреждение, но не блокируем
+        if (!checkResponse.data.available) {
+          setError(t('registration.nicknameTaken'));
+        } else {
+          setError('');
+        }
       } catch (e) {
+        // Если проверка не работает, не блокируем регистрацию
+        console.log('⚠️ Проверка никнейма не удалась, но продолжаем:', e);
         setNicknameAvailable(null);
-        setError(t('common.error'));
+        setError('');
       } finally {
         setChecking(false);
       }
@@ -208,14 +213,14 @@ export default function NicknamePage() {
       <div className="fixed-bottom">
         <button
           className="btn btn-primary btn-large"
-          disabled={!nickname || loading || checking || nickname.length < 3}
+          disabled={!nickname || loading || nickname.length < 3}
           onClick={handleFinish}
           style={{
-            opacity: (!nickname || loading || checking || nickname.length < 3) ? 0.5 : 1,
-            cursor: (!nickname || loading || checking || nickname.length < 3) ? 'not-allowed' : 'pointer'
+            opacity: (!nickname || loading || nickname.length < 3) ? 0.5 : 1,
+            cursor: (!nickname || loading || nickname.length < 3) ? 'not-allowed' : 'pointer'
           }}
         >
-          {loading ? t('common.loading') : checking ? 'Проверка...' : t('registration.finish')}
+          {loading ? t('common.loading') : t('registration.finish')}
         </button>
       </div>
     </div>
