@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import '../styles/AdminPage.css';
 
 // ID админа (ваш Telegram ID)
@@ -41,7 +40,6 @@ const MOCK_REPORTS: Report[] = [
 ];
 
 export default function AdminPage() {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'stats' | 'users' | 'reports'>('stats');
   const [users, setUsers] = useState<User[]>(MOCK_USERS);
