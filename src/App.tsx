@@ -19,6 +19,7 @@ import ProfilePage from './pages/ProfilePage';
 import FavoritesPage from './pages/FavoritesPage';
 import SupportPage from './pages/SupportPage';
 import ChatPage from './pages/ChatPage';
+import AdminPage from './pages/AdminPage';
 
 function App() {
   const { i18n } = useTranslation();
@@ -54,14 +55,17 @@ function App() {
           <>
             {/* Основное приложение */}
             <Route path="/" element={<MainMenu />} />
+            <Route path="/menu" element={<MainMenu />} />
             <Route path="/catalog" element={<CatalogPage />} />
             <Route path="/listing/:id" element={<ListingDetailPage />} />
             <Route path="/add" element={<AddListingPage />} />
+            <Route path="/add-listing" element={<AddListingPage />} />
             <Route path="/my-listings" element={<MyListingsPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/favorites" element={<FavoritesPage />} />
             <Route path="/support" element={<SupportPage />} />
             <Route path="/chat/:chatId" element={<ChatPage />} />
+            <Route path="/admin" element={<AdminPage />} />
           </>
         )}
       </Routes>
