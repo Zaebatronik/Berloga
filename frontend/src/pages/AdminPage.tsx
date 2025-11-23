@@ -43,6 +43,8 @@ export default function AdminPage() {
   const [reports, setReports] = useState<Report[]>(MOCK_REPORTS);
   const [search, setSearch] = useState('');
   const [showListings, setShowListings] = useState<string | null>(null); // userId
+  const [userListings, setUserListings] = useState<any[]>([]);
+  const [loadingListings, setLoadingListings] = useState(false);
   const [logs, setLogs] = useState<string[]>([]);
   const [liveUpdating, setLiveUpdating] = useState(false);
   const socketRef = useRef<Socket | null>(null);
@@ -268,6 +270,31 @@ export default function AdminPage() {
   const filteredUsers = users.filter(u =>
     (!search || u.nickname.toLowerCase().includes(search.toLowerCase()) || u.id.includes(search))
   );
+
+  // Загрузка объявлений пользователя
+  const loadUserListings = async (userId: string) => {
+    setLoadingListings(true);
+    setShowListings(userId);
+    try {
+      const { listingsAPI } = await import('../services/api');
+      const response = await listingsAPI.getByUser(userId);
+      setUserListings(response.data);
+      console.log(`✅ Загружено ${response.data.length} объявлений пользователя ${userId}`);
+      setLogs(lgs => [
+        `📦 Загружено ${response.data.length} объявлений пользователя`,
+        ...lgs
+      ]);
+    } catch (error) {
+      console.error('❌ Ошибка загрузки объявлений:', error);
+      setUserListings([]);
+      setLogs(lgs => [
+        '❌ Ошибка загрузки объявлений пользователя',
+        ...lgs
+      ]);
+    } finally {
+      setLoadingListings(false);
+    }
+  };
 
   // Проверка доступа (в реальном приложении это будет на бэкенде)
   const currentUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() || '123456789';
@@ -653,7 +680,7 @@ export default function AdminPage() {
                     <div className="user-details">
                       <span>ID: {user.id}</span>
                       <span>{user.country} • {user.city}</span>
-                      <span>{user.listingsCount} объявлений <button style={{marginLeft:4}} onClick={() => setShowListings(user.id)}>👁️</button></span>
+                      <span>{user.listingsCount} объявлений <button style={{marginLeft:4,padding:'4px 8px',borderRadius:6,border:'none',background:'#667eea',color:'white',cursor:'pointer'}} onClick={() => loadUserListings(user.id)}>👁️ Показать</button></span>
                       <span>С {user.joinedAt}</span>
                     </div>
                   </div>
@@ -681,14 +708,116 @@ export default function AdminPage() {
             </div>
             {/* Просмотр объявлений пользователя */}
             {showListings && (
-              <div style={{background:'#fff',border:'1px solid #ccc',borderRadius:12,padding:16,marginTop:16}}>
-                <h4>Объявления пользователя {filteredUsers.find(u=>u.id===showListings)?.nickname}:</h4>
-                <ul>
-                  {listings.filter(l=>l.userId===showListings).map(l=>(
-                    <li key={l.id}>{l.title} ({l.category}, {l.price}₽)</li>
-                  ))}
-                </ul>
-                <button onClick={()=>setShowListings(null)}>Закрыть</button>
+              <div style={{
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                border: 'none',
+                borderRadius: 16,
+                padding: 20,
+                marginTop: 16,
+                color: 'white',
+                boxShadow: '0 8px 32px rgba(102, 126, 234, 0.3)'
+              }}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+                  <h4 style={{margin:0,fontSize:18,fontWeight:600}}>
+                    📦 Объявления пользователя {filteredUsers.find(u=>u.id===showListings)?.nickname}
+                  </h4>
+                  <button 
+                    onClick={()=>{setShowListings(null);setUserListings([]);}}
+                    style={{
+                      padding:'8px 16px',
+                      borderRadius:8,
+                      border:'none',
+                      background:'rgba(255,255,255,0.2)',
+                      color:'white',
+                      cursor:'pointer',
+                      fontWeight:600
+                    }}
+                  >
+                    ✕ Закрыть
+                  </button>
+                </div>
+                
+                {loadingListings ? (
+                  <div style={{textAlign:'center',padding:20}}>
+                    <div style={{fontSize:32}}>⏳</div>
+                    <div>Загрузка объявлений...</div>
+                  </div>
+                ) : userListings.length === 0 ? (
+                  <div style={{
+                    background:'rgba(255,255,255,0.1)',
+                    padding:20,
+                    borderRadius:12,
+                    textAlign:'center'
+                  }}>
+                    <div style={{fontSize:32,marginBottom:8}}>📭</div>
+                    <div>У пользователя пока нет объявлений</div>
+                  </div>
+                ) : (
+                  <div style={{
+                    display:'grid',
+                    gap:12,
+                    maxHeight:400,
+                    overflowY:'auto'
+                  }}>
+                    {userListings.map(listing => (
+                      <div 
+                        key={listing._id || listing.id}
+                        style={{
+                          background:'rgba(255,255,255,0.15)',
+                          backdropFilter:'blur(10px)',
+                          borderRadius:12,
+                          padding:16,
+                          transition:'all 0.3s',
+                          cursor:'pointer'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                        onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                      >
+                        <div style={{display:'flex',gap:12,alignItems:'start'}}>
+                          {listing.photos && listing.photos[0] && (
+                            <img 
+                              src={listing.photos[0]} 
+                              alt={listing.title}
+                              style={{
+                                width:80,
+                                height:80,
+                                objectFit:'cover',
+                                borderRadius:8,
+                                border:'2px solid rgba(255,255,255,0.3)'
+                              }}
+                            />
+                          )}
+                          <div style={{flex:1}}>
+                            <div style={{fontSize:16,fontWeight:600,marginBottom:4}}>
+                              {listing.title}
+                            </div>
+                            <div style={{fontSize:13,opacity:0.9,marginBottom:8}}>
+                              {listing.description?.substring(0, 100)}{listing.description?.length > 100 ? '...' : ''}
+                            </div>
+                            <div style={{display:'flex',gap:12,fontSize:12,opacity:0.8,flexWrap:'wrap'}}>
+                              <span>💰 {listing.price}₽ {listing.negotiable && '(торг)'}</span>
+                              <span>📁 {listing.category}</span>
+                              <span>📍 {listing.city}, {listing.country}</span>
+                              <span>👁️ {listing.views || 0} просмотров</span>
+                              <span>📅 {new Date(listing.createdAt).toLocaleDateString('ru-RU')}</span>
+                            </div>
+                            <div style={{marginTop:8}}>
+                              <span style={{
+                                padding:'4px 8px',
+                                borderRadius:6,
+                                background: listing.status === 'active' ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)',
+                                fontSize:11,
+                                fontWeight:600
+                              }}>
+                                {listing.status === 'active' ? '✅ Активно' : '🚫 ' + listing.status}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>
