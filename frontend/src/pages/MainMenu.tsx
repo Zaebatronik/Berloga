@@ -14,7 +14,7 @@ export default function MainMenu() {
   const isAdmin = currentUserId === ADMIN_ID;
 
   const handleLogout = () => {
-    if (window.confirm('Вы уверены, что хотите выйти? Придётся пройти регистрацию заново.')) {
+    if (window.confirm(t('common.logoutConfirm'))) {
       // Очищаем данные пользователя и состояние регистрации
       clearUser();
       localStorage.clear();
@@ -31,7 +31,7 @@ export default function MainMenu() {
     { icon: '⭐', label: t('menu.favorites'), path: '/favorites' },
     { icon: '❓', label: t('menu.support'), path: '/support' },
     ...(isAdmin ? [{ icon: '👑', label: 'Админ-панель', path: '/admin' }] : []),
-    { icon: '🚪', label: 'Выход', onClick: handleLogout },
+    { icon: '🚪', label: t('menu.logout'), onClick: handleLogout },
   ];
 
   return (

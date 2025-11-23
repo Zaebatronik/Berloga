@@ -157,6 +157,10 @@
     "error": "Fehler",
     "success": "Erfolgreich",
     "required": "Pflichtfeld",
-    "km": "km"
+    "km": "km",
+    "logoutConfirm": "Sind Sie sicher, dass Sie sich abmelden möchten? Sie müssen sich erneut registrieren."
+  },
+  "menu": {
+    "logout": "Ausgang"
   }
 }
