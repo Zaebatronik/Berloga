@@ -1,10 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import { useStore } from '../store';
 
 export default function SupportPage() {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useStore();
   
