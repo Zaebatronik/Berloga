@@ -28,6 +28,7 @@ export default function SimpleChatPage() {
   const [listing, setListing] = useState<any>(null);
   const [chatId, setChatId] = useState<string>('');
   const [loading, setLoading] = useState(true);
+  const [otherUser, setOtherUser] = useState<{ id: string; nickname: string } | null>(null);
 
   // Инициализация Socket.IO и загрузка чата
   useEffect(() => {
@@ -120,6 +121,15 @@ export default function SimpleChatPage() {
           buyerNickname: user.nickname
         });
 
+        // Определяем собеседника
+        if (isSeller) {
+          // Я продавец, собеседник - покупатель (тот кто первым написал)
+          setOtherUser({ id: buyerId, nickname: user.nickname }); // Временно, обновим после получения чата
+        } else {
+          // Я покупатель, собеседник - продавец
+          setOtherUser({ id: sellerId, nickname: foundListing.userNickname });
+        }
+
         try {
           // НОВАЯ ЛОГИКА: используем findOrCreate для получения/создания чата между двумя пользователями
           const response = await chatsAPI.findOrCreate({
@@ -132,6 +142,26 @@ export default function SimpleChatPage() {
           
           const chat = response.data;
           console.log('✅ Чат получен/создан:', chat._id, 'Сообщений:', chat.messages?.length || 0);
+
+          // Определяем собеседника из чата
+          const myId = user.telegramId || user.id;
+          const otherUserId = chat.participant1 === myId ? chat.participant2 : chat.participant1;
+          
+          // Получаем информацию о собеседнике из participantsInfo
+          const participantsInfo = chat.participantsInfo || new Map();
+          const otherUserInfo = participantsInfo[otherUserId] || participantsInfo.get?.(otherUserId);
+          
+          if (otherUserInfo) {
+            setOtherUser({ 
+              id: otherUserId, 
+              nickname: otherUserInfo.nickname || (isSeller ? 'Покупатель' : foundListing.userNickname)
+            });
+          } else {
+            setOtherUser({ 
+              id: otherUserId, 
+              nickname: isSeller ? 'Покупатель' : foundListing.userNickname
+            });
+          }
 
           setChatId(chat._id);
           setMessages(chat.messages || []);
@@ -312,10 +342,6 @@ export default function SimpleChatPage() {
     return <div style={{ padding: '20px', textAlign: 'center' }}>Загрузка чата...</div>;
   }
 
-  const otherUserNickname = listing.userId === user?.id 
-    ? 'Покупатель' 
-    : listing.userNickname;
-
   return (
     <div style={{
       display: 'flex',
@@ -323,15 +349,17 @@ export default function SimpleChatPage() {
       height: '100vh',
       background: 'var(--tg-theme-bg-color, #fff)'
     }}>
-      {/* Шапка */}
+      {/* Шапка с информацией о собеседнике */}
       <div style={{
-        padding: '16px',
+        padding: '12px 16px',
         borderBottom: '1px solid var(--tg-theme-hint-color, #e5e7eb)',
         display: 'flex',
         alignItems: 'center',
         gap: '12px',
-        background: 'var(--tg-theme-secondary-bg-color, #f9fafb)'
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        boxShadow: '0 2px 8px rgba(102, 126, 234, 0.3)'
       }}>
+        {/* Кнопка назад */}
         <button
           onClick={() => navigate(-1)}
           style={{
@@ -339,19 +367,68 @@ export default function SimpleChatPage() {
             height: '36px',
             borderRadius: '50%',
             border: 'none',
-            background: 'var(--tg-theme-button-color, #3b82f6)',
-            color: 'var(--tg-theme-button-text-color, white)',
-            fontSize: '18px',
-            cursor: 'pointer'
+            background: 'rgba(255, 255, 255, 0.2)',
+            color: 'white',
+            fontSize: '20px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'all 0.2s'
           }}
+          onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)'}
+          onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'}
         >
           ←
         </button>
-        <div>
-          <div style={{ fontWeight: 600, fontSize: '16px' }}>{otherUserNickname}</div>
-          <div style={{ fontSize: '12px', color: 'var(--tg-theme-hint-color, #9ca3af)' }}>
-            {listing.title}
+
+        {/* Информация о собеседнике */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontWeight: 700, fontSize: '16px', color: 'white', marginBottom: '2px' }}>
+            {otherUser?.nickname || 'Собеседник'}
           </div>
+          <div style={{ 
+            fontSize: '12px', 
+            color: 'rgba(255, 255, 255, 0.8)',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap'
+          }}>
+            💬 {listing.title}
+          </div>
+        </div>
+
+        {/* Аватар с кликом на профиль */}
+        <div
+          onClick={() => {
+            if (otherUser?.id) {
+              navigate(`/user/${otherUser.id}`);
+            }
+          }}
+          style={{
+            width: '48px',
+            height: '48px',
+            borderRadius: '50%',
+            background: 'rgba(255, 255, 255, 0.2)',
+            border: '2px solid rgba(255, 255, 255, 0.4)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '24px',
+            cursor: 'pointer',
+            transition: 'all 0.2s',
+            flexShrink: 0
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'scale(1.1)';
+            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'scale(1)';
+            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+          }}
+        >
+          👤
         </div>
       </div>
 
