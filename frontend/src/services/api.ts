@@ -69,6 +69,15 @@ export const chatsAPI = {
   getById: (chatId: string) => api.get(`/chats/${chatId}`),
   getByListingAndUser: (listingId: string, userId: string) => 
     api.get(`/chats/listing/${listingId}/user/${userId}`),
+  // НОВЫЙ МЕТОД: Найти или создать чат между двумя пользователями
+  findOrCreate: (data: {
+    buyerId: string;
+    sellerId: string;
+    listingId: string;
+    buyerNickname: string;
+    sellerNickname: string;
+  }) => api.post('/chats/find-or-create', data),
+  // УСТАРЕВШИЙ метод (оставлен для совместимости)
   create: (data: any) => api.post('/chats', data),
   sendMessage: (chatId: string, message: any) =>
     api.post(`/chats/${chatId}/messages`, message),

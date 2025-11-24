@@ -103,39 +103,35 @@ export default function SimpleChatPage() {
 
       try {
         const isSeller = foundListing.userId === user.id || foundListing.userId === user.telegramId;
+        const sellerId = foundListing.userId;
+        const buyerId = user.telegramId || user.id;
+        
+        if (!buyerId) {
+          alert('Ошибка: не удалось определить ID пользователя');
+          navigate(-1);
+          return;
+        }
+
+        console.log('👥 Инициализация чата:', {
+          isSeller,
+          sellerId,
+          buyerId,
+          sellerNickname: foundListing.userNickname,
+          buyerNickname: user.nickname
+        });
 
         try {
-          let chat;
+          // НОВАЯ ЛОГИКА: используем findOrCreate для получения/создания чата между двумя пользователями
+          const response = await chatsAPI.findOrCreate({
+            buyerId,
+            sellerId,
+            listingId,
+            buyerNickname: user.nickname,
+            sellerNickname: foundListing.userNickname
+          });
           
-          // Сначала пробуем найти существующий чат
-          try {
-            const existingChatResponse = await chatsAPI.getByListingAndUser(listingId, user.id);
-            chat = existingChatResponse.data;
-            console.log('✅ Найден существующий чат:', chat._id);
-          } catch (notFoundError: any) {
-            // Если чат не найден (404), создаем новый (только для покупателя)
-            if (notFoundError.response?.status === 404) {
-              if (isSeller) {
-                console.log('⚠️ Продавец пытается открыть несуществующий чат');
-                alert('Чат еще не создан. Покупатель должен написать первым.');
-                navigate(-1);
-                return;
-              }
-              
-              console.log('📝 Покупатель создает новый чат...');
-              const response = await chatsAPI.create({
-                listingId,
-                participants: [
-                  { userId: foundListing.userId, nickname: foundListing.userNickname },
-                  { userId: user.id, nickname: user.nickname }
-                ]
-              });
-              chat = response.data;
-              console.log('✅ Новый чат создан:', chat._id);
-            } else {
-              throw notFoundError;
-            }
-          }
+          const chat = response.data;
+          console.log('✅ Чат получен/создан:', chat._id, 'Сообщений:', chat.messages?.length || 0);
 
           setChatId(chat._id);
           setMessages(chat.messages || []);
@@ -230,23 +226,26 @@ export default function SimpleChatPage() {
       return;
     }
 
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      senderId: user.id,
+    const userId = user.telegramId || user.id;
+    const messageData = {
+      senderId: userId,
       text: messageText.trim(),
       timestamp: Date.now()
     };
 
     console.log('📤 Отправка сообщения:', {
       chatId,
-      senderId: user.id,
-      text: messageText.trim(),
-      listingId
+      senderId: userId,
+      text: messageText.trim().substring(0, 50) + '...'
     });
 
     try {
-      // Добавляем сообщение локально сразу
-      setMessages(prev => [...prev, newMessage]);
+      // Добавляем сообщение локально сразу (оптимистичное обновление)
+      const optimisticMessage: Message = {
+        id: Date.now().toString(),
+        ...messageData
+      };
+      setMessages(prev => [...prev, optimisticMessage]);
       setMessageText('');
 
       // Тактильная обратная связь
@@ -254,10 +253,10 @@ export default function SimpleChatPage() {
         window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
       }
 
-      // Пробуем отправить на сервер
+      // Отправляем на сервер
       try {
-        console.log('🌐 Отправка на сервер, chatId:', chatId);
-        const response = await chatsAPI.sendMessage(chatId, newMessage);
+        console.log('🌐 Отправка на сервер...');
+        const response = await chatsAPI.sendMessage(chatId, messageData);
         console.log('✅ Ответ от сервера:', {
           chatId: response.data._id,
           messagesCount: response.data.messages?.length,
@@ -274,7 +273,7 @@ export default function SimpleChatPage() {
         if (socket?.connected) {
           socket.emit('send-message', {
             chatId,
-            message: newMessage
+            message: messageData
           });
           console.log('📡 Сообщение отправлено через Socket.IO в комнату:', chatId);
         } else {
@@ -286,7 +285,7 @@ export default function SimpleChatPage() {
         const localChatKey = `chat_${listingId}_${user.id}`;
         const localChat = localStorage.getItem(localChatKey);
         const chat = localChat ? JSON.parse(localChat) : { messages: [] };
-        chat.messages.push(newMessage);
+        chat.messages.push(messageData);
         localStorage.setItem(localChatKey, JSON.stringify(chat));
       }
     } catch (error) {

@@ -29,32 +29,43 @@ const messageSchema = new mongoose.Schema({
 });
 
 const chatSchema = new mongoose.Schema({
-  listingId: {
+  // НОВАЯ ЛОГИКА: Чат между двумя конкретными пользователями (не привязан к объявлению)
+  participant1: {
+    type: String, // Telegram ID первого пользователя
+    required: true,
+    index: true,
+  },
+  participant2: {
+    type: String, // Telegram ID второго пользователя
+    required: true,
+    index: true,
+  },
+  // Храним информацию об участниках
+  participantsInfo: {
+    type: Map,
+    of: {
+      nickname: String,
+      language: {
+        type: String,
+        default: 'ru'
+      },
+      contactsShared: {
+        type: Boolean,
+        default: false,
+      },
+      contacts: {
+        telegram: String,
+        phone: String,
+        email: String,
+      },
+    }
+  },
+  // Опционально: можем хранить ссылку на объявление с которого начался чат (для истории)
+  initialListingId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Listing',
-    required: true,
+    required: false,
   },
-  participants: [{
-    userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true,
-    },
-    nickname: String,
-    language: {
-      type: String,
-      default: 'ru'
-    },
-    contactsShared: {
-      type: Boolean,
-      default: false,
-    },
-    contacts: {
-      telegram: String,
-      phone: String,
-      email: String,
-    },
-  }],
   messages: [messageSchema],
   createdAt: {
     type: Date,
@@ -65,6 +76,9 @@ const chatSchema = new mongoose.Schema({
     default: Date.now,
   },
 });
+
+// Индекс для быстрого поиска чата между двумя пользователями
+chatSchema.index({ participant1: 1, participant2: 1 }, { unique: true });
 
 chatSchema.pre('save', function(next) {
   this.updatedAt = Date.now();
