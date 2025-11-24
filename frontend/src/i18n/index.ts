@@ -21,10 +21,17 @@ i18n
       pl: { translation: pl },
     },
     lng: 'ru',
-    fallbackLng: 'en',
+    fallbackLng: 'ru',
+    debug: false,
     interpolation: {
       escapeValue: false,
     },
+    react: {
+      useSuspense: false,
+    },
   });
+
+// Проверяем что переводы загружены
+console.log('i18n initialized with languages:', Object.keys(i18n.store.data));
 
 export default i18n;
