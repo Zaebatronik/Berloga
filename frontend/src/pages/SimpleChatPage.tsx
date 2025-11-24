@@ -30,23 +30,44 @@ export default function SimpleChatPage() {
   useEffect(() => {
     if (!listingId || !user) return;
 
-    // Находим объявление
-    const foundListing = listings.find(l => l.id === listingId);
-    if (!foundListing) {
-      alert('Объявление не найдено');
-      navigate('/catalog');
-      return;
-    }
+    // Загружаем объявление с сервера
+    const loadListing = async () => {
+      try {
+        // Сначала пробуем найти в локальном store
+        let foundListing = listings.find(l => l.id === listingId);
+        
+        // Если нет - загружаем с сервера
+        if (!foundListing) {
+          const { listingsAPI } = await import('../services/api');
+          const response = await listingsAPI.getById(listingId);
+          foundListing = response.data;
+        }
 
-    setListing(foundListing);
+        if (!foundListing) {
+          alert('Объявление не найдено');
+          navigate('/catalog');
+          return;
+        }
 
-    // Подключаем Socket.IO
-    if (!socket) {
-      socket = io(API_URL);
-    }
+        setListing(foundListing);
+        return foundListing;
+      } catch (error) {
+        console.error('Ошибка загрузки объявления:', error);
+        alert('Не удалось загрузить объявление');
+        navigate('/catalog');
+        return null;
+      }
+    };
 
-    // Создаём или загружаем чат с сервера
-    const initChat = async () => {
+    const init = async () => {
+      const foundListing = await loadListing();
+      if (!foundListing) return;
+
+      // Подключаем Socket.IO
+      if (!socket) {
+        socket = io(API_URL);
+      }
+
       try {
         const isSeller = foundListing.userId === user.id || foundListing.userId === user.telegramId;
         const sellerId = foundListing.userId;
@@ -80,7 +101,7 @@ export default function SimpleChatPage() {
       }
     };
 
-    initChat();
+    init();
 
     // Очистка при размонтировании
     return () => {
