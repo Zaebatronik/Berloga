@@ -22,7 +22,7 @@ i18n
     },
     lng: 'ru',
     fallbackLng: 'ru',
-    debug: true, // Включаем отладку
+    debug: false,
     interpolation: {
       escapeValue: false,
     },

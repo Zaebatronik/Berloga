@@ -52,7 +52,8 @@
     "myListings": "Mes annonces",
     "profile": "Profil",
     "favorites": "Favoris",
-    "support": "Aide"
+    "support": "Aide",
+    "logout": "Sortir"
   },
   "catalog": {
     "title": "Catalogue d'annonces",
@@ -161,9 +162,6 @@
     "required": "Champ obligatoire",
     "km": "km",
     "logoutConfirm": "Êtes-vous sûr de vouloir vous déconnecter? Vous devrez vous réinscrire."
-  },
-  "menu": {
-    "logout": "Sortir"
   },
   "chat": {
     "title": "Chat",

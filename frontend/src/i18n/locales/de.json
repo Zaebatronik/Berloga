@@ -53,7 +53,8 @@
     "myListings": "Meine Anzeigen",
     "profile": "Profil",
     "favorites": "Favoriten",
-    "support": "Hilfe"
+    "support": "Hilfe",
+    "logout": "Ausgang"
   },
   "catalog": {
     "title": "Anzeigenkatalog",
@@ -162,9 +163,6 @@
     "required": "Pflichtfeld",
     "km": "km",
     "logoutConfirm": "Sind Sie sicher, dass Sie sich abmelden möchten? Sie müssen sich erneut registrieren."
-  },
-  "menu": {
-    "logout": "Ausgang"
   },
   "chat": {
     "title": "Chat",

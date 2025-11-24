@@ -53,7 +53,8 @@
     "myListings": "My Listings",
     "profile": "Profile",
     "favorites": "Favorites",
-    "support": "Help"
+    "support": "Help",
+    "logout": "Exit"
   },
   "catalog": {
     "title": "Listings Catalog",
@@ -185,9 +186,6 @@
     "required": "Required field",
     "km": "km",
     "logoutConfirm": "Are you sure you want to log out? You will need to register again."
-  },
-  "menu": {
-    "logout": "Exit"
   },
   "chat": {
     "title": "Chat",
