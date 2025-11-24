@@ -38,11 +38,13 @@ const MOCK_REPORTS: Report[] = [
 export default function AdminPage() {
   const navigate = useNavigate();
   const { allUsers, listings } = useStore();
-  const [activeTab, setActiveTab] = useState<'stats' | 'all' | 'users' | 'banned' | 'reports' | 'logs'>('users');
+  const [activeTab, setActiveTab] = useState<'stats' | 'all' | 'users' | 'banned' | 'reports' | 'logs' | 'listings' | 'broadcast'>('users');
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [reports, setReports] = useState<Report[]>(MOCK_REPORTS);
   const [search, setSearch] = useState('');
   const [logs, setLogs] = useState<string[]>([]);
+  const [broadcastMessage, setBroadcastMessage] = useState('');
+  const [selectedListings, setSelectedListings] = useState<string[]>([]);
   const [liveUpdating, setLiveUpdating] = useState(false);
   const socketRef = useRef<Socket | null>(null);
 
@@ -510,6 +512,18 @@ export default function AdminPage() {
           >
             📋 Логи {logs.length > 0 && <span className="badge">{logs.length}</span>}
           </button>
+          <button 
+            className={`tab-btn ${activeTab === 'listings' ? 'active' : ''}`}
+            onClick={() => setActiveTab('listings')}
+          >
+            📦 Объявления ({stats.totalListings})
+          </button>
+          <button 
+            className={`tab-btn ${activeTab === 'broadcast' ? 'active' : ''}`}
+            onClick={() => setActiveTab('broadcast')}
+          >
+            📢 Рассылка
+          </button>
         </div>
 
         {/* Статистика */}
@@ -891,6 +905,205 @@ export default function AdminPage() {
                   )}
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* Управление объявлениями */}
+        {activeTab === 'listings' && (
+          <div className="listings-content">
+            <div className="content-header">
+              <h3>📦 Управление объявлениями</h3>
+              <div className="header-actions">
+                <input
+                  type="text"
+                  placeholder="🔍 Поиск по названию..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="search-input"
+                />
+                {selectedListings.length > 0 && (
+                  <button 
+                    className="bulk-action-btn"
+                    onClick={() => {
+                      if (confirm(`Удалить ${selectedListings.length} выбранных объявлений?`)) {
+                        setLogs(lgs => [`🗑️ Удалено ${selectedListings.length} объявлений`, ...lgs]);
+                        setSelectedListings([]);
+                      }
+                    }}
+                  >
+                    🗑️ Удалить выбранные ({selectedListings.length})
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="listings-stats">
+              <div className="mini-stat">
+                <span className="mini-stat-icon">📦</span>
+                <span className="mini-stat-value">{listings.length}</span>
+                <span className="mini-stat-label">Всего</span>
+              </div>
+              <div className="mini-stat">
+                <span className="mini-stat-icon">✅</span>
+                <span className="mini-stat-value">{listings.filter(l => l.status === 'active').length}</span>
+                <span className="mini-stat-label">Активных</span>
+              </div>
+              <div className="mini-stat">
+                <span className="mini-stat-icon">👁️</span>
+                <span className="mini-stat-value">{listings.reduce((sum, l) => sum + (l.views || 0), 0)}</span>
+                <span className="mini-stat-label">Просмотров</span>
+              </div>
+            </div>
+
+            <div className="listings-list">
+              {listings
+                .filter(listing => 
+                  listing.title.toLowerCase().includes(search.toLowerCase()) ||
+                  listing.description?.toLowerCase().includes(search.toLowerCase())
+                )
+                .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
+                .map((listing) => (
+                  <div key={listing.id} className="listing-card-admin">
+                    <input
+                      type="checkbox"
+                      checked={selectedListings.includes(listing.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedListings([...selectedListings, listing.id]);
+                        } else {
+                          setSelectedListings(selectedListings.filter(id => id !== listing.id));
+                        }
+                      }}
+                      className="listing-checkbox"
+                    />
+                    
+                    {listing.photos && listing.photos.length > 0 && (
+                      <img src={listing.photos[0]} alt={listing.title} className="listing-image-admin" />
+                    )}
+                    
+                    <div className="listing-info-admin">
+                      <h4 className="listing-title-admin">{listing.title}</h4>
+                      <p className="listing-price-admin">{listing.price ? `${listing.price} €` : 'Договорная'}</p>
+                      <p className="listing-user-admin">👤 {listing.userNickname || 'Аноним'}</p>
+                      <p className="listing-location-admin">📍 {listing.city}, {listing.country}</p>
+                      <p className="listing-date-admin">📅 {new Date(listing.createdAt || '').toLocaleDateString('ru-RU')}</p>
+                      <p className="listing-views-admin">👁️ {listing.views || 0} просмотров</p>
+                    </div>
+
+                    <div className="listing-actions-admin">
+                      <button 
+                        className="action-btn-admin view-btn"
+                        onClick={() => navigate(`/listing/${listing.id}`)}
+                      >
+                        👁️ Просмотр
+                      </button>
+                      <button 
+                        className="action-btn-admin delete-btn"
+                        onClick={() => {
+                          if (confirm(`Удалить объявление "${listing.title}"?`)) {
+                            setLogs(lgs => [`🗑️ Удалено объявление: ${listing.title}`, ...lgs]);
+                          }
+                        }}
+                      >
+                        🗑️ Удалить
+                      </button>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </div>
+        )}
+
+        {/* Рассылка сообщений */}
+        {activeTab === 'broadcast' && (
+          <div className="broadcast-content">
+            <div className="content-header">
+              <h3>📢 Рассылка сообщений всем пользователям</h3>
+              <p className="broadcast-subtitle">
+                Отправьте важное уведомление всем {stats.activeUsers} активным пользователям
+              </p>
+            </div>
+
+            <div className="broadcast-form">
+              <div className="form-group">
+                <label className="form-label">
+                  ✉️ Сообщение для рассылки
+                </label>
+                <textarea
+                  className="broadcast-textarea"
+                  placeholder="Введите текст сообщения для рассылки всем пользователям...
+
+Примеры:
+• Уважаемые пользователи! Проводятся технические работы...
+• 🎉 Новая функция: теперь вы можете...
+• ⚠️ Важное уведомление о безопасности..."
+                  value={broadcastMessage}
+                  onChange={(e) => setBroadcastMessage(e.target.value)}
+                  rows={10}
+                />
+                <div className="char-counter">
+                  {broadcastMessage.length} / 1000 символов
+                </div>
+              </div>
+
+              <div className="broadcast-preview">
+                <h4>📱 Предпросмотр сообщения:</h4>
+                <div className="message-preview">
+                  <div className="preview-header">
+                    <span className="preview-bot">🐻 Берлога Bot</span>
+                    <span className="preview-time">Только что</span>
+                  </div>
+                  <div className="preview-text">
+                    {broadcastMessage || 'Введите текст сообщения...'}
+                  </div>
+                </div>
+              </div>
+
+              <div className="broadcast-actions">
+                <button 
+                  className="broadcast-btn send-btn"
+                  disabled={!broadcastMessage.trim() || broadcastMessage.length > 1000}
+                  onClick={() => {
+                    if (confirm(`Отправить сообщение всем ${stats.activeUsers} пользователям?`)) {
+                      setLogs(lgs => [`📢 Рассылка отправлена ${stats.activeUsers} пользователям`, ...lgs]);
+                      setBroadcastMessage('');
+                      if (window.Telegram?.WebApp?.HapticFeedback) {
+                        window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+                      }
+                    }
+                  }}
+                >
+                  📤 Отправить всем ({stats.activeUsers})
+                </button>
+                <button 
+                  className="broadcast-btn test-btn"
+                  disabled={!broadcastMessage.trim()}
+                  onClick={() => {
+                    setLogs(lgs => [`🧪 Тестовое сообщение отправлено вам`, ...lgs]);
+                    alert(`Тест сообщения:\n\n${broadcastMessage}`);
+                  }}
+                >
+                  🧪 Тест (отправить себе)
+                </button>
+                <button 
+                  className="broadcast-btn clear-btn"
+                  onClick={() => setBroadcastMessage('')}
+                >
+                  🗑️ Очистить
+                </button>
+              </div>
+
+              <div className="broadcast-tips">
+                <h4>💡 Советы по рассылке:</h4>
+                <ul>
+                  <li>✅ Пишите кратко и по делу</li>
+                  <li>✅ Используйте эмодзи для привлечения внимания</li>
+                  <li>✅ Указывайте срок действия акций</li>
+                  <li>❌ Не злоупотребляйте рассылкой (макс 1-2 раза в неделю)</li>
+                  <li>❌ Не отправляйте рекламу сторонних сервисов</li>
+                </ul>
+              </div>
             </div>
           </div>
         )}
