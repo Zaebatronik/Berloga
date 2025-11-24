@@ -19,6 +19,7 @@ export interface User {
 
 export interface Listing {
   id: string;
+  _id?: string; // MongoDB ID (может отличаться от id)
   serialNumber: string;
   userId: string;
   userNickname: string;

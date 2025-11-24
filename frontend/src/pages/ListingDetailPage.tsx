@@ -53,8 +53,9 @@ export default function ListingDetailPage() {
   const handleContactSeller = () => {
     if (!listing) return;
     
-    // Открываем внутренний чат
-    navigate(`/chat/${listing.id}`);
+    // Открываем внутренний чат, используем id из URL или _id из MongoDB
+    const listingId = id || listing._id || listing.id;
+    navigate(`/chat/${listingId}`);
     
     if (window.Telegram?.WebApp?.HapticFeedback) {
       window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');

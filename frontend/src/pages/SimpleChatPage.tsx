@@ -1,3 +1,4 @@
+// SimpleChatPage - Anonymous real-time chat with Socket.IO and localStorage fallback
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useStore } from '../store';
@@ -35,8 +36,10 @@ export default function SimpleChatPage() {
     // Загружаем объявление с сервера
     const loadListing = async () => {
       try {
-        // Сначала пробуем найти в локальном store
-        let foundListing = listings.find((l: any) => l.id === listingId);
+        // Сначала пробуем найти в локальном store (проверяем и id, и _id)
+        let foundListing = listings.find((l: any) => 
+          l.id === listingId || l._id === listingId
+        );
         
         // Если нет - пробуем загрузить с сервера
         if (!foundListing) {
@@ -51,7 +54,9 @@ export default function SimpleChatPage() {
             const localListings = localStorage.getItem('listings');
             if (localListings) {
               const parsedListings = JSON.parse(localListings);
-              foundListing = parsedListings.find((l: any) => l.id === listingId);
+              foundListing = parsedListings.find((l: any) => 
+                l.id === listingId || l._id === listingId
+              );
               if (foundListing) {
                 console.log('✅ Объявление найдено в localStorage');
               }
