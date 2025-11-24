@@ -22,6 +22,7 @@
   "registration": {
     "selectCountry": "Select Country",
     "selectCity": "Select City",
+    "locationHint": "Select your country and city",
     "cityHint": "Choose country and city to buy and sell goods nearby",
     "citySearchHint": "💡 Tip: Start typing the city name in the search field. The system supports over 1000 cities worldwide!",
     "continueToCity": "Continue →",
@@ -30,6 +31,8 @@
     "searchCity": "Search city...",
     "enterManually": "Enter manually",
     "useGeolocation": "Use geolocation",
+    "geolocationError": "Unable to detect location. Please select manually.",
+    "geolocationNotSupported": "Geolocation is not supported by your device",
     "selectRadius": "Set search radius",
     "radius": "Radius",
     "onlyMyCity": "Only my city",

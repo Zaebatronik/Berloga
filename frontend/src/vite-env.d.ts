@@ -57,6 +57,10 @@ interface TelegramWebApp {
     notificationOccurred: (type: 'error' | 'success' | 'warning') => void;
     selectionChanged: () => void;
   };
+  LocationManager?: {
+    init: () => void;
+    getLocation: (callback: (location: { latitude: number; longitude: number } | null) => void) => void;
+  };
   ready: () => void;
   expand: () => void;
   close: () => void;

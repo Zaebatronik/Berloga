@@ -22,10 +22,13 @@
   "registration": {
     "selectCountry": "Оберіть країну",
     "selectCity": "Оберіть місто",
+    "locationHint": "Оберіть вашу країну та місто",
     "searchCountry": "Пошук країни...",
     "searchCity": "Пошук міста...",
     "enterManually": "Ввести вручну",
     "useGeolocation": "Визначити за геолокацією",
+    "geolocationError": "Не вдалося визначити місцезнаходження. Оберіть вручну.",
+    "geolocationNotSupported": "Геолокація не підтримується вашим пристроєм",
     "selectRadius": "Встановіть радіус пошуку",
     "radius": "Радіус",
     "onlyMyCity": "Тільки моє місто",

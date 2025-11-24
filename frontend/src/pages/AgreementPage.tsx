@@ -12,7 +12,7 @@ export default function AgreementPage() {
     if (window.Telegram?.WebApp?.HapticFeedback) {
       window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
     }
-    navigate('/country');
+    navigate('/location');
   };
 
   const handleDecline = () => {

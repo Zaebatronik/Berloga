@@ -6,8 +6,7 @@ import { useStore } from './store';
 // Pages
 import WelcomePage from './pages/WelcomePage';
 import AgreementPage from './pages/AgreementPage';
-import CountryPage from './pages/CountryPage';
-import CityPage from './pages/CityPage';
+import LocationPage from './pages/LocationPage';
 import RadiusPage from './pages/RadiusPage';
 import NicknamePage from './pages/NicknamePage';
 import MainMenu from './pages/MainMenu';
@@ -114,8 +113,7 @@ function App() {
           <>
             <Route path="/" element={<WelcomePage />} />
             <Route path="/agreement" element={<AgreementPage />} />
-            <Route path="/country" element={<CountryPage />} />
-            <Route path="/city" element={<CityPage />} />
+            <Route path="/location" element={<LocationPage />} />
             <Route path="/radius" element={<RadiusPage />} />
             <Route path="/nickname" element={<NicknamePage />} />
             <Route path="*" element={<Navigate to="/" replace />} />

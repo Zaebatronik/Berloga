@@ -22,10 +22,13 @@
   "registration": {
     "selectCountry": "Seleccionar país",
     "selectCity": "Seleccionar ciudad",
+    "locationHint": "Selecciona tu país y ciudad",
     "searchCountry": "Buscar país...",
     "searchCity": "Buscar ciudad...",
     "enterManually": "Introducir manualmente",
     "useGeolocation": "Usar geolocalización",
+    "geolocationError": "No se pudo determinar la ubicación. Por favor, seleccione manualmente.",
+    "geolocationNotSupported": "La geolocalización no es compatible con su dispositivo",
     "selectRadius": "Establecer radio de búsqueda",
     "radius": "Radio",
     "onlyMyCity": "Solo mi ciudad",
