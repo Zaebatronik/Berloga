@@ -454,30 +454,69 @@ export default function ListingDetailPage() {
         boxShadow: '0 -4px 12px rgba(0, 0, 0, 0.08)',
         zIndex: 100
       }}>
-        <button
-          onClick={handleContactSeller}
-          style={{
-            width: '100%',
-            padding: '16px',
-            borderRadius: '16px',
-            border: 'none',
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            color: 'white',
-            fontSize: '16px',
-            fontWeight: '700',
-            cursor: 'pointer',
-            boxShadow: '0 8px 24px rgba(102, 126, 234, 0.4)',
-            transition: 'transform 0.2s',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px'
-          }}
-          onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.97)'}
-          onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
-        >
-          💬 Написать продавцу
-        </button>
+        {listing.userId === user?.id || listing.userId === user?.telegramId ? (
+          // Если это моё объявление - показываем кнопки управления
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <button
+              onClick={() => navigate('/my-listings')}
+              style={{
+                flex: 1,
+                padding: '16px',
+                borderRadius: '16px',
+                border: '2px solid #667eea',
+                background: 'white',
+                color: '#667eea',
+                fontSize: '16px',
+                fontWeight: '700',
+                cursor: 'pointer'
+              }}
+            >
+              ✏️ {t('common.edit')}
+            </button>
+            <button
+              onClick={() => navigate('/catalog')}
+              style={{
+                flex: 1,
+                padding: '16px',
+                borderRadius: '16px',
+                border: 'none',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                color: 'white',
+                fontSize: '16px',
+                fontWeight: '700',
+                cursor: 'pointer'
+              }}
+            >
+              📋 {t('menu.catalog')}
+            </button>
+          </div>
+        ) : (
+          // Если чужое объявление - показываем кнопку "Написать продавцу"
+          <button
+            onClick={handleContactSeller}
+            style={{
+              width: '100%',
+              padding: '16px',
+              borderRadius: '16px',
+              border: 'none',
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              color: 'white',
+              fontSize: '16px',
+              fontWeight: '700',
+              cursor: 'pointer',
+              boxShadow: '0 8px 24px rgba(102, 126, 234, 0.4)',
+              transition: 'transform 0.2s',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px'
+            }}
+            onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.97)'}
+            onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
+          >
+            💬 {t('chat.seller')}
+          </button>
+        )}
       </div>
     </div>
   );

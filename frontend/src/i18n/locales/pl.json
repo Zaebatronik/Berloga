@@ -38,7 +38,11 @@
     "nicknameTaken": "Ten pseudonim jest już zajęty",
     "continue": "Kontynuuj",
     "back": "Wstecz",
-    "finish": "Zakończ rejestrację"
+    "finish": "Zakończ rejestrację",
+    "cityHint": "Wybierz kraj i miasto, aby kupować i sprzedawać towary w pobliżu",
+    "citySearchHint": "💡 Wskazówka: Zacznij wpisywać nazwę miasta w polu wyszukiwania. System obsługuje ponad 1000 miast na całym świecie!",
+    "continueToCity": "Kontynuuj →",
+    "selectCityButton": "Wybierz miasto"
   },
   "menu": {
     "catalog": "Katalog",
@@ -68,11 +72,16 @@
     "hobbies": "Hobby i Wypoczynek",
     "animals": "Zwierzęta",
     "jobs": "Praca",
-    "other": "Inne"
+    "other": "Inne",
+    "clothes": "Odzież",
+    "hobby": "Hobby",
+    "toys": "Zabawki",
+    "food": "Żywność"
   },
   "listing": {
     "title": "Tytuł",
     "description": "Opis",
+    "descriptionLabel": "Opis",
     "price": "Cena",
     "negotiable": "Do negocjacji",
     "city": "Miasto",
@@ -148,6 +157,23 @@
     "error": "Błąd",
     "success": "Sukces",
     "required": "Pole wymagane",
-    "km": "km"
+    "km": "km",
+    "logoutConfirm": "Czy na pewno chcesz się wylogować? Będziesz musiał zarejestrować się ponownie."
+  },
+  "menu": {
+    "logout": "Wyjście"
+  },
+  "chat": {
+    "title": "Czat",
+    "seller": "Sprzedawca",
+    "buyer": "Kupujący",
+    "viewListing": "Ogłoszenie",
+    "noMessages": "Jeszcze brak wiadomości",
+    "startConversation": "Rozpocznij rozmowę ze sprzedawcą!",
+    "typePlaceholder": "Napisz wiadomość...",
+    "sendError": "Nie udało się wysłać wiadomości",
+    "loadError": "Nie udało się załadować czatu",
+    "cannotMessageYourself": "Nie możesz pisać do siebie",
+    "error": "Błąd"
   }
 }

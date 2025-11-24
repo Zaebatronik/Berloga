@@ -172,15 +172,49 @@ export default function CatalogPage() {
   useEffect(() => {
     let result = [...listings];
 
-    // Поиск
+    // Умный поиск с нечётким совпадением
     if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(
-        (listing) =>
-          listing.title.toLowerCase().includes(query) ||
-          listing.description.toLowerCase().includes(query) ||
-          listing.city.toLowerCase().includes(query)
-      );
+      const query = searchQuery.toLowerCase().trim();
+      
+      // Разбиваем запрос на слова для поиска по частям
+      const searchWords = query.split(/\s+/).filter(w => w.length > 0);
+      
+      result = result.filter((listing) => {
+        const titleLower = listing.title.toLowerCase();
+        const descLower = listing.description.toLowerCase();
+        const cityLower = listing.city.toLowerCase();
+        const categoryLower = (listing.category || '').toLowerCase();
+        
+        // Ищем каждое слово в заголовке, описании, городе или категории
+        return searchWords.every(word => 
+          titleLower.includes(word) || 
+          descLower.includes(word) || 
+          cityLower.includes(word) ||
+          categoryLower.includes(word)
+        );
+      });
+      
+      // Дополнительная сортировка по релевантности
+      result = result.sort((a, b) => {
+        const aTitle = a.title.toLowerCase();
+        const bTitle = b.title.toLowerCase();
+        
+        // Точное совпадение в начале заголовка - высший приоритет
+        const aStartsWith = searchWords.some(word => aTitle.startsWith(word));
+        const bStartsWith = searchWords.some(word => bTitle.startsWith(word));
+        
+        if (aStartsWith && !bStartsWith) return -1;
+        if (!aStartsWith && bStartsWith) return 1;
+        
+        // Точное совпадение в заголовке - второй приоритет
+        const aExact = searchWords.some(word => aTitle.includes(word));
+        const bExact = searchWords.some(word => bTitle.includes(word));
+        
+        if (aExact && !bExact) return -1;
+        if (!aExact && bExact) return 1;
+        
+        return 0;
+      });
     }
 
     // Категория

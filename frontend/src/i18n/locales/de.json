@@ -162,5 +162,18 @@
   },
   "menu": {
     "logout": "Ausgang"
+  },
+  "chat": {
+    "title": "Chat",
+    "seller": "Verkäufer",
+    "buyer": "Käufer",
+    "viewListing": "Anzeige",
+    "noMessages": "Noch keine Nachrichten",
+    "startConversation": "Beginnen Sie ein Gespräch mit dem Verkäufer!",
+    "typePlaceholder": "Nachricht schreiben...",
+    "sendError": "Nachricht konnte nicht gesendet werden",
+    "loadError": "Chat konnte nicht geladen werden",
+    "cannotMessageYourself": "Sie können sich nicht selbst schreiben",
+    "error": "Fehler"
   }
 }

@@ -10,6 +10,14 @@ const messageSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  translatedText: {
+    type: String,
+    default: null
+  },
+  originalLanguage: {
+    type: String,
+    default: 'ru'
+  },
   isSystemMessage: {
     type: Boolean,
     default: false,
@@ -33,6 +41,10 @@ const chatSchema = new mongoose.Schema({
       required: true,
     },
     nickname: String,
+    language: {
+      type: String,
+      default: 'ru'
+    },
     contactsShared: {
       type: Boolean,
       default: false,

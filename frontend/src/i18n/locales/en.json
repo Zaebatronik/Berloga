@@ -22,6 +22,10 @@
   "registration": {
     "selectCountry": "Select Country",
     "selectCity": "Select City",
+    "cityHint": "Choose country and city to buy and sell goods nearby",
+    "citySearchHint": "💡 Tip: Start typing the city name in the search field. The system supports over 1000 cities worldwide!",
+    "continueToCity": "Continue →",
+    "selectCityButton": "Select city",
     "searchCountry": "Search country...",
     "searchCity": "Search city...",
     "enterManually": "Enter manually",
@@ -74,10 +78,14 @@
     "electronics": "Electronics",
     "services": "Services",
     "fashion": "Fashion",
+    "clothes": "Clothing",
     "home": "Home & Garden",
     "hobbies": "Hobbies & Leisure",
+    "hobby": "Hobbies",
     "animals": "Animals",
     "jobs": "Jobs",
+    "toys": "Toys",
+    "food": "Food",
     "other": "Other"
   },
   "listing": {
@@ -97,6 +105,7 @@
     "show": "Show",
     "delete": "Delete",
     "details": "Details",
+    "descriptionLabel": "Description",
     "writeToSeller": "Write to seller",
     "serialNumber": "Serial number",
     "published": "Published",
@@ -171,6 +180,23 @@
     "error": "Error",
     "success": "Success",
     "required": "Required field",
-    "km": "km"
+    "km": "km",
+    "logoutConfirm": "Are you sure you want to log out? You will need to register again."
+  },
+  "menu": {
+    "logout": "Exit"
+  },
+  "chat": {
+    "title": "Chat",
+    "seller": "Seller",
+    "buyer": "Buyer",
+    "viewListing": "Listing",
+    "noMessages": "No messages yet",
+    "startConversation": "Start a conversation with the seller!",
+    "typePlaceholder": "Type a message...",
+    "sendError": "Failed to send message",
+    "loadError": "Failed to load chat",
+    "cannotMessageYourself": "You cannot message yourself",
+    "error": "Error"
   }
 }

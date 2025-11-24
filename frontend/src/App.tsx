@@ -133,7 +133,7 @@ function App() {
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/favorites" element={<FavoritesPage />} />
             <Route path="/support" element={<SupportPage />} />
-            <Route path="/chat/:chatId" element={<ChatPage />} />
+            <Route path="/chat/:listingId" element={<ChatPage />} />
             <Route path="/admin" element={<AdminPage />} />
             <Route path="/user/:userId" element={<UserProfilePage />} />
           </>

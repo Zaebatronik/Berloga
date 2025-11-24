@@ -37,7 +37,11 @@
     "nicknameTaken": "Ce pseudo est déjà pris",
     "continue": "Continuer",
     "back": "Retour",
-    "finish": "Terminer l'inscription"
+    "finish": "Terminer l'inscription",
+    "cityHint": "Choisissez le pays et la ville pour acheter et vendre des biens à proximité",
+    "citySearchHint": "💡 Astuce: Commencez à taper le nom de la ville dans le champ de recherche. Le système prend en charge plus de 1000 villes dans le monde!",
+    "continueToCity": "Continuer →",
+    "selectCityButton": "Sélectionner la ville"
   },
   "menu": {
     "catalog": "Catalogue",
@@ -67,11 +71,16 @@
     "hobbies": "Loisirs",
     "animals": "Animaux",
     "jobs": "Emplois",
-    "other": "Autre"
+    "other": "Autre",
+    "clothes": "Vêtements",
+    "hobby": "Passe-temps",
+    "toys": "Jouets",
+    "food": "Alimentation"
   },
   "listing": {
     "title": "Titre",
     "description": "Description",
+    "descriptionLabel": "Description",
     "price": "Prix",
     "negotiable": "Négociable",
     "city": "Ville",
@@ -147,6 +156,23 @@
     "error": "Erreur",
     "success": "Succès",
     "required": "Champ obligatoire",
-    "km": "km"
+    "km": "km",
+    "logoutConfirm": "Êtes-vous sûr de vouloir vous déconnecter? Vous devrez vous réinscrire."
+  },
+  "menu": {
+    "logout": "Sortir"
+  },
+  "chat": {
+    "title": "Chat",
+    "seller": "Vendeur",
+    "buyer": "Acheteur",
+    "viewListing": "Annonce",
+    "noMessages": "Pas encore de messages",
+    "startConversation": "Commencez une conversation avec le vendeur!",
+    "typePlaceholder": "Écrire un message...",
+    "sendError": "Échec de l'envoi du message",
+    "loadError": "Échec du chargement du chat",
+    "cannotMessageYourself": "Vous ne pouvez pas vous écrire à vous-même",
+    "error": "Erreur"
   }
 }

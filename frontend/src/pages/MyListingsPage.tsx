@@ -74,35 +74,53 @@ export default function MyListingsPage() {
     ? listings 
     : listings.filter(l => l.status === filter);
 
-  const handleToggleStatus = (id: string) => {
-    setListings(prev => prev.map(listing => {
-      if (listing.id === id) {
-        return {
-          ...listing,
-          status: listing.status === 'active' ? 'hidden' : 'active'
-        };
-      }
-      return listing;
-    }));
+  const handleToggleStatus = async (id: string) => {
+    try {
+      const listing = listings.find(l => l.id === id);
+      if (!listing) return;
 
-    if (window.Telegram?.WebApp?.HapticFeedback) {
-      window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+      const newStatus = listing.status === 'active' ? 'hidden' : 'active';
+      const { listingsAPI } = await import('../services/api');
+      
+      await listingsAPI.updateStatus(id, newStatus);
+      
+      setListings(prev => prev.map(l => {
+        if (l.id === id) {
+          return { ...l, status: newStatus as 'active' | 'hidden' | 'sold' };
+        }
+        return l;
+      }));
+
+      if (window.Telegram?.WebApp?.HapticFeedback) {
+        window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+      }
+    } catch (error) {
+      console.error('Ошибка изменения статуса:', error);
+      alert(t('common.error'));
     }
   };
 
-  const handleDelete = (id: string) => {
-    if (window.confirm(t('myListings.confirmDelete'))) {
+  const handleDelete = async (id: string) => {
+    if (!window.confirm(t('myListings.confirmDelete'))) return;
+
+    try {
+      const { listingsAPI } = await import('../services/api');
+      await listingsAPI.delete(id);
+      
       setListings(prev => prev.filter(l => l.id !== id));
       
       if (window.Telegram?.WebApp?.HapticFeedback) {
         window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
       }
+    } catch (error) {
+      console.error('Ошибка удаления:', error);
+      alert(t('common.error'));
     }
   };
 
   const handleEdit = (id: string) => {
-    // В будущем откроет страницу редактирования
-    alert(`${t('myListings.editListing')} #${id}`);
+    // Переходим к странице деталей объявления, где есть кнопка редактирования
+    navigate(`/listing/${id}`);
   };
 
   const getStatusBadge = (status: string) => {
