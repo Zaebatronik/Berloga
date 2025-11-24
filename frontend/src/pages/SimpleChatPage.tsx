@@ -225,7 +225,10 @@ export default function SimpleChatPage() {
 
   // Отправка сообщения
   const handleSend = async () => {
-    if (!messageText.trim() || !user || !chatId) return;
+    if (!messageText.trim() || !user || !chatId) {
+      console.log('⚠️ Нельзя отправить:', { messageText: !!messageText.trim(), user: !!user, chatId });
+      return;
+    }
 
     const newMessage: Message = {
       id: Date.now().toString(),
@@ -233,6 +236,13 @@ export default function SimpleChatPage() {
       text: messageText.trim(),
       timestamp: Date.now()
     };
+
+    console.log('📤 Отправка сообщения:', {
+      chatId,
+      senderId: user.id,
+      text: messageText.trim(),
+      listingId
+    });
 
     try {
       // Добавляем сообщение локально сразу
@@ -246,20 +256,30 @@ export default function SimpleChatPage() {
 
       // Пробуем отправить на сервер
       try {
+        console.log('🌐 Отправка на сервер, chatId:', chatId);
         const response = await chatsAPI.sendMessage(chatId, newMessage);
-        console.log('✅ Сообщение отправлено на сервер:', response.data);
+        console.log('✅ Ответ от сервера:', {
+          chatId: response.data._id,
+          messagesCount: response.data.messages?.length,
+          participants: response.data.participants
+        });
         
         // Обновляем сообщения с сервера (чтобы получить правильные _id)
         if (response.data.messages) {
+          console.log(`🔄 Обновляю сообщения с сервера (${response.data.messages.length} штук)`);
           setMessages(response.data.messages);
         }
         
         // Отправляем через Socket.IO для моментальной доставки другому пользователю
-        socket?.emit('send-message', {
-          chatId,
-          message: newMessage
-        });
-        console.log('📡 Сообщение отправлено через Socket.IO');
+        if (socket?.connected) {
+          socket.emit('send-message', {
+            chatId,
+            message: newMessage
+          });
+          console.log('📡 Сообщение отправлено через Socket.IO в комнату:', chatId);
+        } else {
+          console.log('⚠️ Socket.IO не подключен, сообщение отправлено только на сервер');
+        }
       } catch (serverError) {
         console.error('⚠️ Ошибка отправки на сервер:', serverError);
         // Сохраняем в localStorage
