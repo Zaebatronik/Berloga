@@ -91,20 +91,40 @@ export default function SimpleChatPage() {
 
       try {
         const isSeller = foundListing.userId === user.id || foundListing.userId === user.telegramId;
-        const sellerId = foundListing.userId;
-        const buyerId = isSeller ? 'temp_buyer' : user.id;
 
         try {
-          // Пробуем создать чат на сервере
-          const response = await chatsAPI.create({
-            listingId,
-            participants: [
-              { userId: sellerId, nickname: foundListing.userNickname },
-              { userId: buyerId, nickname: isSeller ? 'Покупатель' : user.nickname }
-            ]
-          });
+          let chat;
+          
+          // Сначала пробуем найти существующий чат
+          try {
+            const existingChatResponse = await chatsAPI.getByListingAndUser(listingId, user.id);
+            chat = existingChatResponse.data;
+            console.log('✅ Найден существующий чат:', chat._id);
+          } catch (notFoundError: any) {
+            // Если чат не найден (404), создаем новый (только для покупателя)
+            if (notFoundError.response?.status === 404) {
+              if (isSeller) {
+                console.log('⚠️ Продавец пытается открыть несуществующий чат');
+                alert('Чат еще не создан. Покупатель должен написать первым.');
+                navigate(-1);
+                return;
+              }
+              
+              console.log('📝 Покупатель создает новый чат...');
+              const response = await chatsAPI.create({
+                listingId,
+                participants: [
+                  { userId: foundListing.userId, nickname: foundListing.userNickname },
+                  { userId: user.id, nickname: user.nickname }
+                ]
+              });
+              chat = response.data;
+              console.log('✅ Новый чат создан:', chat._id);
+            } else {
+              throw notFoundError;
+            }
+          }
 
-          const chat = response.data;
           setChatId(chat._id);
           setMessages(chat.messages || []);
 
@@ -116,7 +136,7 @@ export default function SimpleChatPage() {
             setMessages(prev => [...prev, message]);
           });
 
-          console.log('✅ Чат загружен с сервера');
+          console.log('✅ Чат готов к использованию');
         } catch (serverError) {
           console.log('⚠️ Сервер недоступен, работаем в режиме localStorage');
           // Fallback: работаем с localStorage

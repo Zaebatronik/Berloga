@@ -14,6 +14,27 @@ router.get('/user/:userId', async (req, res) => {
   }
 });
 
+// Получить чат по объявлению (для покупателя и продавца)
+router.get('/listing/:listingId/user/:userId', async (req, res) => {
+  try {
+    const { listingId, userId } = req.params;
+    
+    // Ищем чат где есть это объявление и пользователь является участником
+    const chat = await Chat.findOne({
+      listingId,
+      'participants.userId': userId
+    });
+
+    if (!chat) {
+      return res.status(404).json({ message: 'Чат не найден' });
+    }
+
+    res.json(chat);
+  } catch (error) {
+    res.status(500).json({ message: 'Ошибка сервера', error: error.message });
+  }
+});
+
 // Получить конкретный чат
 router.get('/:id', async (req, res) => {
   try {

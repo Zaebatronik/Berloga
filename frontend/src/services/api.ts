@@ -67,6 +67,8 @@ export const listingsAPI = {
 export const chatsAPI = {
   getByUser: (userId: string) => api.get(`/chats/user/${userId}`),
   getById: (chatId: string) => api.get(`/chats/${chatId}`),
+  getByListingAndUser: (listingId: string, userId: string) => 
+    api.get(`/chats/listing/${listingId}/user/${userId}`),
   create: (data: any) => api.post('/chats', data),
   sendMessage: (chatId: string, message: any) =>
     api.post(`/chats/${chatId}/messages`, message),
