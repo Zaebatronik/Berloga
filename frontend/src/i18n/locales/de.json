@@ -169,6 +169,13 @@
     "km": "km",
     "logoutConfirm": "Sind Sie sicher, dass Sie sich abmelden möchten? Sie müssen sich erneut registrieren."
   },
+  "goodbye": {
+    "title": "Es tut uns sehr leid!",
+    "message": "Wir sind traurig, dass Sie uns verlassen.",
+    "hope": "Wir hoffen, dass Sie wiederkommen!",
+    "return": "Zurückkehren",
+    "hint": "Klicken Sie auf die Schaltfläche, um neu zu beginnen"
+  },
   "chat": {
     "title": "Chat",
     "seller": "Verkäufer",

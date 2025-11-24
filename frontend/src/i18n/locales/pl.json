@@ -169,6 +169,13 @@
     "km": "km",
     "logoutConfirm": "Czy na pewno chcesz się wylogować? Będziesz musiał zarejestrować się ponownie."
   },
+  "goodbye": {
+    "title": "Bardzo nam przykro!",
+    "message": "Jesteśmy smutni, że nas opuściasz.",
+    "hope": "Mamy nadzieję, że wrócisz!",
+    "return": "Powrócić",
+    "hint": "Kliknij przycisk, aby zacząć od nowa"
+  },
   "chat": {
     "title": "Czat",
     "seller": "Sprzedawca",

@@ -1,8 +1,10 @@
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import '../styles/GoodbyePage.css';
 
 export default function GoodbyePage() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const handleReturn = () => {
     navigate('/', { replace: true });
@@ -12,18 +14,18 @@ export default function GoodbyePage() {
     <div className="goodbye-page">
       <div className="goodbye-content">
         <div className="goodbye-icon">😢</div>
-        <h1 className="goodbye-title">Нам очень жаль!</h1>
+        <h1 className="goodbye-title">{t('goodbye.title')}</h1>
         <p className="goodbye-message">
-          Мы расстроены, что вы покидаете нас. 
+          {t('goodbye.message')}
           <br />
-          Надеемся, что вы вернётесь снова!
+          {t('goodbye.hope')}
         </p>
         <div className="goodbye-emoji">🐻💔</div>
         <button className="return-button" onClick={handleReturn}>
-          🏠 Вернуться
+          🏠 {t('goodbye.return')}
         </button>
         <p className="goodbye-hint">
-          Нажмите кнопку, чтобы начать заново
+          {t('goodbye.hint')}
         </p>
       </div>
     </div>

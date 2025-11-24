@@ -168,6 +168,13 @@
     "km": "km",
     "logoutConfirm": "Êtes-vous sûr de vouloir vous déconnecter? Vous devrez vous réinscrire."
   },
+  "goodbye": {
+    "title": "Nous sommes vraiment désolés!",
+    "message": "Nous sommes tristes de vous voir partir.",
+    "hope": "Nous espérons que vous reviendrez!",
+    "return": "Retourner",
+    "hint": "Cliquez sur le bouton pour recommencer"
+  },
   "chat": {
     "title": "Chat",
     "seller": "Vendeur",

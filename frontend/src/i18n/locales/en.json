@@ -192,6 +192,13 @@
     "km": "km",
     "logoutConfirm": "Are you sure you want to log out? You will need to register again."
   },
+  "goodbye": {
+    "title": "We're so sorry!",
+    "message": "We're sad to see you leave.",
+    "hope": "We hope you'll come back again!",
+    "return": "Return",
+    "hint": "Click the button to start over"
+  },
   "chat": {
     "title": "Chat",
     "seller": "Seller",
