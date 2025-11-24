@@ -25,7 +25,7 @@ jobs:
         run: |
           cd frontend
           echo "📦 Installing dependencies..."
-          rm -rf node_modules package-lock.json dist
+          rm -rf node_modules package-lock.json dist .tsbuildinfo
           npm install --legacy-peer-deps
           echo "✅ Dependencies installed"
         
@@ -39,6 +39,8 @@ jobs:
           ls -la dist/
           echo "📄 Checking index.html..."
           cat dist/index.html | grep 'index-'
+          echo "🔍 Checking SimpleChatPage imports..."
+          grep -A 2 "import.*Socket" src/pages/SimpleChatPage.tsx || echo "⚠️ Socket import not found"
         env:
           NODE_ENV: production
 
