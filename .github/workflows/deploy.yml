@@ -25,6 +25,7 @@ jobs:
         run: |
           cd frontend
           echo "📦 Installing dependencies..."
+          rm -rf node_modules package-lock.json dist
           npm install --legacy-peer-deps
           echo "✅ Dependencies installed"
         
@@ -36,6 +37,8 @@ jobs:
           echo "✅ Build complete"
           echo "📁 Checking dist folder..."
           ls -la dist/
+          echo "📄 Checking index.html..."
+          cat dist/index.html | grep 'index-'
         env:
           NODE_ENV: production
 
