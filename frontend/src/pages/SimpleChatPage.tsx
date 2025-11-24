@@ -1,23 +1,18 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useStore } from '../store';
+import { io, Socket } from 'socket.io-client';
+import { chatsAPI } from '../services/api';
 
 interface Message {
-  id: string;
+  _id?: string;
   senderId: string;
-  senderNickname: string;
   text: string;
-  timestamp: number;
+  createdAt?: string;
 }
 
-interface LocalChat {
-  listingId: string;
-  sellerId: string;
-  sellerNickname: string;
-  buyerId: string;
-  buyerNickname: string;
-  messages: Message[];
-}
+const API_URL = import.meta.env.VITE_API_URL || 'https://kupiyproday.onrender.com';
+let socket: Socket | null = null;
 
 export default function SimpleChatPage() {
   const { listingId } = useParams<{ listingId: string }>();
@@ -28,9 +23,10 @@ export default function SimpleChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [messageText, setMessageText] = useState('');
   const [listing, setListing] = useState<any>(null);
-  const [otherUserNickname, setOtherUserNickname] = useState('');
+  const [chatId, setChatId] = useState<string>('');
+  const [loading, setLoading] = useState(true);
 
-  // Загрузка чата из localStorage
+  // Инициализация Socket.IO и загрузка чата
   useEffect(() => {
     if (!listingId || !user) return;
 
@@ -44,21 +40,52 @@ export default function SimpleChatPage() {
 
     setListing(foundListing);
 
-    // Определяем кто продавец, кто покупатель
-    const isSeller = foundListing.userId === user.id || foundListing.userId === user.telegramId;
-    setOtherUserNickname(isSeller ? 'Покупатель' : foundListing.userNickname);
-
-    // Загружаем сообщения из localStorage
-    const chatKey = `chat_${listingId}_${user.id}`;
-    const savedChat = localStorage.getItem(chatKey);
-    if (savedChat) {
-      try {
-        const chat: LocalChat = JSON.parse(savedChat);
-        setMessages(chat.messages || []);
-      } catch (e) {
-        console.error('Ошибка загрузки чата:', e);
-      }
+    // Подключаем Socket.IO
+    if (!socket) {
+      socket = io(API_URL);
     }
+
+    // Создаём или загружаем чат с сервера
+    const initChat = async () => {
+      try {
+        const isSeller = foundListing.userId === user.id || foundListing.userId === user.telegramId;
+        const sellerId = foundListing.userId;
+        const buyerId = isSeller ? 'temp_buyer' : user.id;
+
+        // Создаём чат (если существует - вернётся существующий)
+        const response = await chatsAPI.create({
+          listingId,
+          participants: [
+            { userId: sellerId, nickname: foundListing.userNickname },
+            { userId: buyerId, nickname: isSeller ? 'Покупатель' : user.nickname }
+          ]
+        });
+
+        const chat = response.data;
+        setChatId(chat._id);
+        setMessages(chat.messages || []);
+
+        // Присоединяемся к комнате чата
+        socket?.emit('join-chat', chat._id);
+
+        // Слушаем новые сообщения
+        socket?.on('new-message', (message: Message) => {
+          setMessages(prev => [...prev, message]);
+        });
+
+        setLoading(false);
+      } catch (error) {
+        console.error('Ошибка загрузки чата:', error);
+        setLoading(false);
+      }
+    };
+
+    initChat();
+
+    // Очистка при размонтировании
+    return () => {
+      socket?.off('new-message');
+    };
   }, [listingId, user, listings, navigate]);
 
   // Автопрокрутка
@@ -67,38 +94,34 @@ export default function SimpleChatPage() {
   }, [messages]);
 
   // Отправка сообщения
-  const handleSend = () => {
-    if (!messageText.trim() || !user || !listing) return;
+  const handleSend = async () => {
+    if (!messageText.trim() || !user || !chatId) return;
 
     const newMessage: Message = {
-      id: `msg_${Date.now()}`,
       senderId: user.id,
-      senderNickname: user.nickname || 'Вы',
-      text: messageText.trim(),
-      timestamp: Date.now()
+      text: messageText.trim()
     };
 
-    const updatedMessages = [...messages, newMessage];
-    setMessages(updatedMessages);
+    try {
+      // Отправляем на сервер
+      await chatsAPI.sendMessage(chatId, newMessage);
 
-    // Сохраняем в localStorage
-    const chatKey = `chat_${listingId}_${user.id}`;
-    const chat: LocalChat = {
-      listingId: listingId!,
-      sellerId: listing.userId,
-      sellerNickname: listing.userNickname,
-      buyerId: user.id,
-      buyerNickname: user.nickname || 'Покупатель',
-      messages: updatedMessages
-    };
-    localStorage.setItem(chatKey, JSON.stringify(chat));
+      // Отправляем через Socket.IO для моментальной доставки
+      socket?.emit('send-message', {
+        chatId,
+        message: newMessage
+      });
 
-    // Очищаем поле ввода
-    setMessageText('');
+      // Очищаем поле ввода
+      setMessageText('');
 
-    // Тактильная обратная связь
-    if (window.Telegram?.WebApp?.HapticFeedback) {
-      window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+      // Тактильная обратная связь
+      if (window.Telegram?.WebApp?.HapticFeedback) {
+        window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+      }
+    } catch (error) {
+      console.error('Ошибка отправки:', error);
+      alert('Не удалось отправить сообщение');
     }
   };
 
@@ -109,9 +132,20 @@ export default function SimpleChatPage() {
     }
   };
 
-  if (!listing) {
-    return <div style={{ padding: '20px', textAlign: 'center' }}>Загрузка...</div>;
+  const handleDeleteMessage = async (messageId: string) => {
+    if (!confirm('Удалить сообщение?')) return;
+    
+    // Пока просто удаляем локально (можно добавить API endpoint для удаления)
+    setMessages(prev => prev.filter(m => m._id !== messageId));
+  };
+
+  if (loading || !listing) {
+    return <div style={{ padding: '20px', textAlign: 'center' }}>Загрузка чата...</div>;
   }
+
+  const otherUserNickname = listing.userId === user?.id 
+    ? 'Покупатель' 
+    : listing.userNickname;
 
   return (
     <div style={{
@@ -159,7 +193,8 @@ export default function SimpleChatPage() {
         padding: '16px',
         display: 'flex',
         flexDirection: 'column',
-        gap: '12px'
+        gap: '16px',
+        WebkitOverflowScrolling: 'touch'
       }}>
         {messages.length === 0 ? (
           <div style={{
@@ -176,23 +211,50 @@ export default function SimpleChatPage() {
             const isMyMessage = msg.senderId === user?.id;
             return (
               <div
-                key={msg.id}
+                key={msg._id || `msg-${Math.random()}`}
                 style={{
                   display: 'flex',
                   justifyContent: isMyMessage ? 'flex-end' : 'flex-start'
                 }}
               >
                 <div style={{
-                  maxWidth: '70%',
-                  padding: '10px 14px',
+                  maxWidth: '80%',
+                  padding: '12px 16px',
                   borderRadius: '16px',
                   background: isMyMessage 
                     ? 'var(--tg-theme-button-color, #3b82f6)' 
                     : 'var(--tg-theme-secondary-bg-color, #f3f4f6)',
                   color: isMyMessage 
                     ? 'var(--tg-theme-button-text-color, white)' 
-                    : 'var(--tg-theme-text-color, #000)'
+                    : 'var(--tg-theme-text-color, #000)',
+                  position: 'relative'
                 }}>
+                  {isMyMessage && (
+                    <button
+                      onClick={() => handleDeleteMessage(msg._id!)}
+                      style={{
+                        position: 'absolute',
+                        top: '-10px',
+                        right: '-10px',
+                        width: '28px',
+                        height: '28px',
+                        borderRadius: '50%',
+                        border: 'none',
+                        background: '#ef4444',
+                        color: 'white',
+                        fontSize: '16px',
+                        fontWeight: 'bold',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                        padding: '0'
+                      }}
+                    >
+                      ×
+                    </button>
+                  )}
                   <div style={{ fontSize: '14px', wordWrap: 'break-word' }}>
                     {msg.text}
                   </div>
@@ -201,10 +263,10 @@ export default function SimpleChatPage() {
                     marginTop: '4px',
                     opacity: 0.7
                   }}>
-                    {new Date(msg.timestamp).toLocaleTimeString('ru-RU', {
+                    {msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString('ru-RU', {
                       hour: '2-digit',
                       minute: '2-digit'
-                    })}
+                    }) : ''}
                   </div>
                 </div>
               </div>
@@ -229,6 +291,7 @@ export default function SimpleChatPage() {
       {/* Поле ввода */}
       <div style={{
         padding: '12px 16px',
+        paddingBottom: 'max(12px, env(safe-area-inset-bottom))',
         borderTop: '1px solid var(--tg-theme-hint-color, #e5e7eb)',
         display: 'flex',
         gap: '8px',
@@ -242,13 +305,14 @@ export default function SimpleChatPage() {
           placeholder="Введите сообщение..."
           style={{
             flex: 1,
-            padding: '10px 14px',
-            borderRadius: '20px',
+            padding: '12px 16px',
+            borderRadius: '22px',
             border: '1px solid var(--tg-theme-hint-color, #e5e7eb)',
             background: 'var(--tg-theme-secondary-bg-color, #f9fafb)',
             color: 'var(--tg-theme-text-color, #000)',
-            fontSize: '14px',
-            outline: 'none'
+            fontSize: '16px',
+            outline: 'none',
+            minHeight: '44px'
           }}
         />
         <button
@@ -272,7 +336,11 @@ export default function SimpleChatPage() {
       </div>
 
       {/* Кнопка обмена контактами */}
-      <div style={{ padding: '12px 16px', paddingTop: 0 }}>
+      <div style={{ 
+        padding: '12px 16px', 
+        paddingTop: 0,
+        paddingBottom: 'max(12px, env(safe-area-inset-bottom))'
+      }}>
         <button
           onClick={() => {
             const telegramUrl = `https://t.me/user?id=${listing.userId}`;
