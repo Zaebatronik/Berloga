@@ -740,7 +740,7 @@ export default function CatalogPage() {
                 >
                   <option value="">🌍 Все страны</option>
                   {countries.map((country) => (
-                    <option key={country.code} value={country.nameRu}>
+                    <option key={country.code} value={country.code}>
                       {country.flag} {country.nameRu}
                     </option>
                   ))}
