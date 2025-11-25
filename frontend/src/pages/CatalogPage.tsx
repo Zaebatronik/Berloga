@@ -43,7 +43,7 @@ export default function CatalogPage() {
   const socketRef = useRef<Socket | null>(null);
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { listings: storeListings, user, favorites: storeFavorites, addToFavorites, removeFromFavorites, isFavorite } = useStore();
+  const { listings: storeListings, user, addToFavorites, removeFromFavorites, isFavorite } = useStore();
   
   const [listings, setListings] = useState<Listing[]>([]);
   const [filteredListings, setFilteredListings] = useState<Listing[]>([]);
