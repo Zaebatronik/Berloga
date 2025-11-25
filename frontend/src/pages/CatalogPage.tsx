@@ -199,15 +199,31 @@ export default function CatalogPage() {
   // Фильтрация и сортировка
   useEffect(() => {
     let result = [...listings];
+    
+    console.log('🔍 ФИЛЬТРАЦИЯ:', {
+      всегоОбъявлений: listings.length,
+      выбранаСтрана: selectedCountry,
+      выбранГород: selectedCity
+    });
 
     // Фильтрация по стране (только если выбрана конкретная страна)
     if (selectedCountry && selectedCountry !== '') {
-      result = result.filter((listing) => listing.country === selectedCountry);
+      const beforeFilter = result.length;
+      result = result.filter((listing) => {
+        console.log(`   Объявление: "${listing.title}" | Страна в БД: "${listing.country}" | Фильтр: "${selectedCountry}" | Совпадает: ${listing.country === selectedCountry}`);
+        return listing.country === selectedCountry;
+      });
+      console.log(`   После фильтра по стране: ${beforeFilter} → ${result.length}`);
     }
 
     // Фильтрация по городу (только если выбран конкретный город)
     if (selectedCity && selectedCity !== '') {
-      result = result.filter((listing) => listing.city === selectedCity);
+      const beforeFilter = result.length;
+      result = result.filter((listing) => {
+        console.log(`   Объявление: "${listing.title}" | Город в БД: "${listing.city}" | Фильтр: "${selectedCity}" | Совпадает: ${listing.city === selectedCity}`);
+        return listing.city === selectedCity;
+      });
+      console.log(`   После фильтра по городу: ${beforeFilter} → ${result.length}`);
     }
 
     // Умный поиск с нечётким совпадением
