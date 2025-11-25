@@ -15,6 +15,7 @@ interface Listing {
   negotiable: boolean;
   category: string;
   city: string;
+  country: string;
   photos: string[];
   createdAt: string;
   userId: string;
@@ -92,13 +93,9 @@ export default function CatalogPage() {
       setLoading(true);
       try {
         const { listingsAPI } = await import('../services/api');
-        // Передаём параметры фильтрации
-        const params: any = {};
-        if (selectedCountry) params.country = selectedCountry;
-        if (selectedCity) params.city = selectedCity;
-        
-        console.log('🔍 Загрузка объявлений с фильтрами:', params);
-        const response = await listingsAPI.getAll(params);
+        // Загружаем ВСЕ объявления без фильтрации (фильтрация будет на клиенте)
+        console.log('🔍 Загрузка всех объявлений с сервера...');
+        const response = await listingsAPI.getAll();
         const serverListings = response.data;
         const formattedListings = serverListings.map((l: any) => ({
           id: l._id || l.id,
@@ -108,6 +105,7 @@ export default function CatalogPage() {
           negotiable: l.negotiable,
           category: l.category,
           city: l.city,
+          country: l.country,
           photos: l.photos,
           createdAt: l.createdAt,
           userId: l.userId,
@@ -134,6 +132,7 @@ export default function CatalogPage() {
           negotiable: l.negotiable,
           category: l.category,
           city: l.city,
+          country: l.country,
           photos: l.photos,
           createdAt: new Date(l.createdAt).toISOString(),
           userId: l.userId,
@@ -182,11 +181,21 @@ export default function CatalogPage() {
         socketRef.current = null;
       }
     };
-  }, [storeListings, selectedCountry, selectedCity]);
+  }, []); // Загружаем только при монтировании
 
   // Фильтрация и сортировка
   useEffect(() => {
     let result = [...listings];
+
+    // Фильтрация по стране (на клиенте)
+    if (selectedCountry) {
+      result = result.filter((listing) => listing.country === selectedCountry);
+    }
+
+    // Фильтрация по городу (на клиенте)
+    if (selectedCity) {
+      result = result.filter((listing) => listing.city === selectedCity);
+    }
 
     // Умный поиск с нечётким совпадением
     if (searchQuery) {
