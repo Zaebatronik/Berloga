@@ -85,6 +85,19 @@ io.on('connection', (socket) => {
     console.log('📡 Socket.IO: Сообщение отправлено в комнату:', data.chatId);
   });
 
+  // Обработка индикатора "печатает..."
+  socket.on('typing', (data) => {
+    console.log('⌨️ Socket.IO: Пользователь печатает в чате:', data.chatId);
+    // Отправляем всем в комнате кроме отправителя
+    socket.to(data.chatId).emit('user-typing', data);
+  });
+
+  socket.on('stop-typing', (data) => {
+    console.log('⌨️ Socket.IO: Пользователь перестал печатать в чате:', data.chatId);
+    // Отправляем всем в комнате кроме отправителя
+    socket.to(data.chatId).emit('user-stopped-typing', data);
+  });
+
   socket.on('disconnect', () => {
     console.log('❌ Пользователь отключился от Socket.IO:', socket.id);
   });

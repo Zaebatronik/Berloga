@@ -22,6 +22,7 @@ export default function SimpleChatPage() {
   const navigate = useNavigate();
   const { user, listings } = useStore();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const typingTimeoutRef = useRef<number | null>(null);
   
   const [messages, setMessages] = useState<Message[]>([]);
   const [messageText, setMessageText] = useState('');
@@ -29,6 +30,8 @@ export default function SimpleChatPage() {
   const [chatId, setChatId] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [otherUser, setOtherUser] = useState<{ id: string; nickname: string } | null>(null);
+  const [isTyping, setIsTyping] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
 
   // Инициализация Socket.IO и загрузка чата
   useEffect(() => {
@@ -128,10 +131,17 @@ export default function SimpleChatPage() {
         
         socket.on('connect', () => {
           console.log('✅ Socket.IO подключен:', socket?.id);
+          setConnectionStatus('connected');
         });
         
         socket.on('disconnect', () => {
           console.log('⚠️ Socket.IO отключен');
+          setConnectionStatus('disconnected');
+        });
+        
+        socket.on('reconnecting', () => {
+          console.log('🔄 Переподключение Socket.IO...');
+          setConnectionStatus('connecting');
         });
       }
 
@@ -209,9 +219,26 @@ export default function SimpleChatPage() {
           // Присоединяемся к комнате чата
           socket?.emit('join-chat', chat._id);
 
+          // Слушаем индикатор "печатает..."
+          socket?.on('user-typing', (data: { userId: string; chatId: string }) => {
+            if (data.chatId === chat._id && data.userId !== myId) {
+              setIsTyping(true);
+              // Убираем индикатор через 3 секунды
+              setTimeout(() => setIsTyping(false), 3000);
+            }
+          });
+
+          socket?.on('user-stopped-typing', (data: { userId: string; chatId: string }) => {
+            if (data.chatId === chat._id && data.userId !== myId) {
+              setIsTyping(false);
+            }
+          });
+
           // Слушаем новые сообщения от других пользователей (общий канал)
           socket?.on('new-message', (message: Message) => {
             console.log('📨 Получено новое сообщение через Socket.IO:', message);
+            
+            const myUserId = user.telegramId || user.id;
             
             // Добавляем только если это не наше сообщение и его еще нет
             setMessages(prev => {
@@ -225,7 +252,7 @@ export default function SimpleChatPage() {
                 return prev;
               }
               
-              if (message.senderId === user.id) {
+              if (message.senderId === myUserId) {
                 console.log('⚠️ Это наше сообщение, пропускаем');
                 return prev;
               }
@@ -316,6 +343,30 @@ export default function SimpleChatPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // Отправка индикатора печати
+  const handleTyping = () => {
+    if (!socket || !chatId || !user) return;
+    
+    // Отправляем событие "начал печатать"
+    socket.emit('typing', {
+      chatId,
+      userId: user.telegramId || user.id
+    });
+    
+    // Сбрасываем предыдущий таймер
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+    
+    // Через 2 секунды отправляем "перестал печатать"
+    typingTimeoutRef.current = window.setTimeout(() => {
+      socket?.emit('stop-typing', {
+        chatId,
+        userId: user.telegramId || user.id
+      });
+    }, 2000);
+  };
+
   // Отправка сообщения
   const handleSend = async () => {
     if (!messageText.trim() || !user || !chatId) {
@@ -366,16 +417,9 @@ export default function SimpleChatPage() {
           setMessages(response.data.messages);
         }
         
-        // Отправляем через Socket.IO для моментальной доставки другому пользователю
-        if (socket?.connected) {
-          socket.emit('send-message', {
-            chatId,
-            message: messageData
-          });
-          console.log('📡 Сообщение отправлено через Socket.IO в комнату:', chatId);
-        } else {
-          console.log('⚠️ Socket.IO не подключен, сообщение отправлено только на сервер');
-        }
+        // Socket.IO отправку делает backend через global.io.emit
+        // Поэтому здесь ничего не делаем - сообщение уже разослано сервером
+        console.log('✅ Сообщение отправлено. Backend автоматически разошлет через Socket.IO');
       } catch (serverError) {
         console.error('⚠️ Ошибка отправки на сервер:', serverError);
         // Сохраняем в localStorage
@@ -451,8 +495,19 @@ export default function SimpleChatPage() {
 
         {/* Информация о собеседнике */}
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontWeight: 700, fontSize: '16px', color: 'white', marginBottom: '2px' }}>
-            {otherUser?.nickname || 'Собеседник'}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
+            <span style={{ fontWeight: 700, fontSize: '16px', color: 'white' }}>
+              {otherUser?.nickname || 'Собеседник'}
+            </span>
+            {/* Индикатор статуса подключения */}
+            <span style={{
+              width: '8px',
+              height: '8px',
+              borderRadius: '50%',
+              background: connectionStatus === 'connected' ? '#10b981' : 
+                         connectionStatus === 'connecting' ? '#f59e0b' : '#ef4444',
+              boxShadow: connectionStatus === 'connected' ? '0 0 8px #10b981' : 'none'
+            }} />
           </div>
           <div style={{ 
             fontSize: '12px', 
@@ -586,6 +641,29 @@ export default function SimpleChatPage() {
             );
           })
         )}
+        
+        {/* Индикатор "печатает..." */}
+        {isTyping && (
+          <div style={{
+            display: 'flex',
+            justifyContent: 'flex-start',
+            marginTop: '12px'
+          }}>
+            <div style={{
+              padding: '12px 16px',
+              borderRadius: '16px',
+              background: 'var(--tg-theme-secondary-bg-color, #f3f4f6)',
+              color: 'var(--tg-theme-hint-color, #9ca3af)',
+              fontSize: '14px'
+            }}>
+              <span className="typing-dots">печатает</span>
+              <span className="dot-1">.</span>
+              <span className="dot-2">.</span>
+              <span className="dot-3">.</span>
+            </div>
+          </div>
+        )}
+        
         <div ref={messagesEndRef} />
       </div>
 
@@ -613,7 +691,10 @@ export default function SimpleChatPage() {
         <input
           type="text"
           value={messageText}
-          onChange={(e) => setMessageText(e.target.value)}
+          onChange={(e) => {
+            setMessageText(e.target.value);
+            handleTyping();
+          }}
           onKeyPress={handleKeyPress}
           placeholder="Введите сообщение..."
           style={{
@@ -676,6 +757,18 @@ export default function SimpleChatPage() {
           📞 Открыть контакт продавца
         </button>
       </div>
+
+      {/* CSS для анимации точек */}
+      <style>{`
+        @keyframes blink {
+          0%, 20% { opacity: 0; }
+          40% { opacity: 1; }
+          100% { opacity: 0; }
+        }
+        .dot-1 { animation: blink 1.4s infinite; animation-delay: 0s; }
+        .dot-2 { animation: blink 1.4s infinite; animation-delay: 0.2s; }
+        .dot-3 { animation: blink 1.4s infinite; animation-delay: 0.4s; }
+      `}</style>
     </div>
   );
 }
