@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../store';
 import { currencyService } from '../services/currency';
-import LocationSelector from '../components/LocationSelector';
+import { locationService } from '../services/location';
 import '../styles/CatalogPage.css';
 
 interface Listing {
@@ -60,6 +60,8 @@ export default function CatalogPage() {
   const [selectedCountry, setSelectedCountry] = useState<string>('');
   const [selectedCity, setSelectedCity] = useState<string>('');
   const [filtersInitialized, setFiltersInitialized] = useState(false);
+  const [countries, setCountries] = useState<any[]>([]);
+  const [cities, setCities] = useState<any[]>([]);
 
   // Фильтры
   const [priceMin, setPriceMin] = useState('');
@@ -67,6 +69,28 @@ export default function CatalogPage() {
   const [onlyNegotiable, setOnlyNegotiable] = useState(false);
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
   const [showSearchHistory, setShowSearchHistory] = useState(false);
+
+  // Загрузка списка стран
+  useEffect(() => {
+    const loadCountries = async () => {
+      const data = await locationService.getCountries();
+      setCountries(data);
+    };
+    loadCountries();
+  }, []);
+
+  // Загрузка городов при выборе страны
+  useEffect(() => {
+    const loadCities = async () => {
+      if (selectedCountry) {
+        const data = await locationService.getCities(selectedCountry);
+        setCities(data);
+      } else {
+        setCities([]);
+      }
+    };
+    loadCities();
+  }, [selectedCountry]);
 
   // Инициализация фильтров локации из профиля пользователя (один раз)
   useEffect(() => {
@@ -690,13 +714,57 @@ export default function CatalogPage() {
             <div className="filter-body">
               <div className="filter-section">
                 <div className="filter-section-title">🌍 Локация</div>
-                <LocationSelector
-                  selectedCountry={selectedCountry}
-                  selectedCity={selectedCity}
-                  onCountryChange={setSelectedCountry}
-                  onCityChange={setSelectedCity}
-                  compact={false}
-                />
+                
+                {/* Выбор страны */}
+                <select
+                  value={selectedCountry}
+                  onChange={(e) => {
+                    setSelectedCountry(e.target.value);
+                    setSelectedCity(''); // Сбрасываем город при смене страны
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    borderRadius: '12px',
+                    border: '2px solid #e5e7eb',
+                    fontSize: '14px',
+                    outline: 'none',
+                    background: 'white',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <option value="">🌍 Все страны</option>
+                  {countries.map((country) => (
+                    <option key={country.code} value={country.nameRu}>
+                      {country.flag} {country.nameRu}
+                    </option>
+                  ))}
+                </select>
+
+                {/* Выбор города */}
+                <select
+                  value={selectedCity}
+                  onChange={(e) => setSelectedCity(e.target.value)}
+                  disabled={!selectedCountry}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    borderRadius: '12px',
+                    border: '2px solid #e5e7eb',
+                    fontSize: '14px',
+                    outline: 'none',
+                    background: selectedCountry ? 'white' : '#f5f5f5',
+                    cursor: selectedCountry ? 'pointer' : 'not-allowed',
+                    marginTop: '12px'
+                  }}
+                >
+                  <option value="">🏙️ Все города</option>
+                  {cities.map((city, index) => (
+                    <option key={index} value={city.nameRu}>
+                      {city.nameRu}
+                    </option>
+                  ))}
+                </select>
                 {user && (
                   <button
                     onClick={() => {
