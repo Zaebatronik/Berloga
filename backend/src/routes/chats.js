@@ -216,16 +216,17 @@ router.post('/:id/messages', async (req, res) => {
         personalEvent: `message-to-${recipientId}`
       });
       
-      // Отправляем в комнату чата (всем кто в ней)
-      global.io.to(chat._id.toString()).emit('new-message', messageToSend);
-      console.log('📡 Событие new-message отправлено в комнату:', chat._id.toString());
-      
-      // Также отправляем персонально получателю (на случай если он не в комнате)
-      global.io.emit(`message-to-${recipientId}`, {
-        chatId: chat._id,
+      // ПРОСТОЕ РЕШЕНИЕ: Отправляем ВСЕМ подключенным клиентам
+      // Пусть они сами фильтруют по chatId
+      global.io.emit('new-message', {
+        chatId: chat._id.toString(),
         message: messageToSend
       });
-      console.log('📡 Персональное уведомление отправлено получателю:', recipientId, `(событие: message-to-${recipientId})`);
+      console.log('📡 Сообщение отправлено ВСЕМ клиентам:', {
+        chatId: chat._id.toString(),
+        senderId: senderIdStr,
+        recipientId
+      });
     } else {
       console.log('⚠️ global.io не определён - Socket.IO недоступен');
     }

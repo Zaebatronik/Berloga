@@ -124,13 +124,25 @@ export default function SimpleChatPage() {
       }
     });
 
-    // Слушаем новые сообщения
-    socket?.on('new-message', (message: Message) => {
+    // Слушаем новые сообщения (УНИВЕРСАЛЬНЫЙ ОБРАБОТЧИК)
+    socket?.on('new-message', (data: any) => {
+      // Проверяем формат данных
+      const message = data.message || data;
+      const messageChatId = data.chatId || chatIdParam;
+      
       console.log('📨 Получено новое сообщение через Socket.IO:', {
+        chatId: messageChatId,
+        currentChatId: chatIdParam,
         senderId: message.senderId,
         text: message.text?.substring(0, 30),
         myId
       });
+      
+      // Проверяем что это наш чат
+      if (messageChatId !== chatIdParam) {
+        console.log('⚠️ Сообщение не для этого чата');
+        return;
+      }
       
       const myUserId = user!.telegramId || user!.id;
       
