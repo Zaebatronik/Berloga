@@ -30,7 +30,7 @@ export default function SimpleChatPage() {
   const [chatId, setChatId] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [otherUser, setOtherUser] = useState<{ id: string; nickname: string } | null>(null);
-  const [isTyping, setIsTyping] = useState(false);
+  const [isTyping] = useState(false); // Пока не используем индикатор печати
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
 
   // Загрузка прямого чата по ID
@@ -89,17 +89,11 @@ export default function SimpleChatPage() {
       setMessages(chat.messages || []);
       setLoading(false);
       
-      // Присоединяемся к комнате чата
-      console.log('🔗 Присоединяемся к комнате чата:', chat._id);
-      socket?.emit('join-chat', chat._id);
-      
-      // Слушаем подтверждение присоединения
-      socket?.on('joined-chat', (data: any) => {
-        console.log('✅ Подтверждение присоединения к комнате:', data);
-      });
+      // НЕ присоединяемся к комнате - используем broadcast
+      console.log('📡 Слушаем broadcast сообщения для чата:', chat._id);
       
       // Слушаем события
-      setupSocketListeners(chat._id, myId);
+      setupSocketListeners(chat._id);
       
     } catch (error) {
       console.error('❌ Ошибка загрузки чата:', error);
@@ -108,44 +102,48 @@ export default function SimpleChatPage() {
     }
   };
 
-  // Настройка слушателей Socket.IO
-  const setupSocketListeners = (chatIdParam: string, myId: string) => {
-    // Слушаем индикатор "печатает..."
-    socket?.on('user-typing', (data: { userId: string; chatId: string }) => {
-      if (data.chatId === chatIdParam && data.userId !== myId) {
-        setIsTyping(true);
-        setTimeout(() => setIsTyping(false), 3000);
-      }
+  // Настройка слушателей Socket.IO - ТОЛЬКО BROADCAST
+  const setupSocketListeners = (chatIdParam: string) => {
+    const myUserId = user!.telegramId || user!.id;
+    
+    console.log('🎧 Настройка слушателей для чата:', {
+      chatIdParam,
+      myUserId
     });
 
-    socket?.on('user-stopped-typing', (data: { userId: string; chatId: string }) => {
-      if (data.chatId === chatIdParam && data.userId !== myId) {
-        setIsTyping(false);
-      }
-    });
-
-    // Слушаем новые сообщения (УНИВЕРСАЛЬНЫЙ ОБРАБОТЧИК)
+    // ЕДИНСТВЕННЫЙ обработчик - слушаем broadcast всем
     socket?.on('new-message', (data: any) => {
+      console.log('📨 Получено broadcast сообщение:', {
+        receivedData: data,
+        hasMessage: !!data.message,
+        hasChatId: !!data.chatId
+      });
+      
       // Проверяем формат данных
       const message = data.message || data;
       const messageChatId = data.chatId || chatIdParam;
       
-      console.log('📨 Получено новое сообщение через Socket.IO:', {
-        chatId: messageChatId,
+      console.log('🔍 Проверка сообщения:', {
+        messageChatId,
         currentChatId: chatIdParam,
         senderId: message.senderId,
-        text: message.text?.substring(0, 30),
-        myId
+        myUserId,
+        textPreview: message.text?.substring(0, 30)
       });
       
-      // Проверяем что это наш чат
+      // Фильтр 1: Проверяем что это наш чат
       if (messageChatId !== chatIdParam) {
-        console.log('⚠️ Сообщение не для этого чата');
+        console.log('⏭️ Пропускаем: не наш чат');
         return;
       }
       
-      const myUserId = user!.telegramId || user!.id;
+      // Фильтр 2: Проверяем что это не наше сообщение
+      if (String(message.senderId) === String(myUserId)) {
+        console.log('⏭️ Пропускаем: наше сообщение');
+        return;
+      }
       
+      // Фильтр 3: Проверяем что сообщение не дубликат
       setMessages(prev => {
         const exists = prev.some(m => 
           (m._id && m._id === message._id) || 
@@ -153,48 +151,12 @@ export default function SimpleChatPage() {
         );
         
         if (exists) {
-          console.log('⚠️ Сообщение уже существует, пропускаем');
+          console.log('⏭️ Пропускаем: дубликат');
           return prev;
         }
         
-        if (message.senderId === myUserId) {
-          console.log('⚠️ Это наше сообщение, пропускаем');
-          return prev;
-        }
-        
-        console.log('✅ Добавляем новое сообщение');
+        console.log('✅ Добавляем новое сообщение в чат');
         return [...prev, message];
-      });
-    });
-
-    // Персональные уведомления
-    console.log('🔊 Подписываемся на персональные уведомления:', `message-to-${myId}`);
-    socket?.on(`message-to-${myId}`, (data: { chatId: string; message: Message }) => {
-      console.log('📨 Получено персональное уведомление:', {
-        chatId: data.chatId,
-        senderId: data.message.senderId,
-        text: data.message.text?.substring(0, 30),
-        expectedListener: `message-to-${myId}`
-      });
-      
-      if (data.chatId !== chatIdParam) {
-        console.log('⚠️ Сообщение не для этого чата');
-        return;
-      }
-      
-      setMessages(prev => {
-        const exists = prev.some(m => 
-          (m._id && m._id === data.message._id) || 
-          (m.id === data.message.id && m.timestamp === data.message.timestamp)
-        );
-        
-        if (exists) {
-          console.log('⚠️ Сообщение уже существует, пропускаем');
-          return prev;
-        }
-        
-        console.log('✅ Добавляем персональное сообщение');
-        return [...prev, data.message];
       });
     });
   };
@@ -399,11 +361,11 @@ export default function SimpleChatPage() {
           setChatId(chat._id);
           setMessages(chat.messages || []);
 
-          // Присоединяемся к комнате чата
-          socket?.emit('join-chat', chat._id);
+          // НЕ присоединяемся к комнате - используем broadcast
+          console.log('📡 Слушаем broadcast сообщения для чата:', chat._id);
 
           // Настраиваем слушатели Socket.IO
-          setupSocketListeners(chat._id, myId);
+          setupSocketListeners(chat._id);
 
           console.log('✅ Чат готов к использованию');
         } catch (serverError) {

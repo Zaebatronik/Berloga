@@ -217,16 +217,28 @@ router.post('/:id/messages', async (req, res) => {
       });
       
       // ПРОСТОЕ РЕШЕНИЕ: Отправляем ВСЕМ подключенным клиентам
-      // Пусть они сами фильтруют по chatId
-      global.io.emit('new-message', {
+      const payload = {
         chatId: chat._id.toString(),
         message: messageToSend
+      };
+      
+      console.log('📡 Отправка broadcast сообщения:', {
+        event: 'new-message',
+        payload: JSON.stringify(payload, null, 2),
+        connectedClients: global.io.engine.clientsCount
       });
-      console.log('📡 Сообщение отправлено ВСЕМ клиентам:', {
-        chatId: chat._id.toString(),
-        senderId: senderIdStr,
-        recipientId
-      });
+      
+      global.io.emit('new-message', payload);
+      
+      console.log('✅ Broadcast отправлен всем клиентам');
+      
+      // Проверяем что событие действительно эмитится
+      setTimeout(() => {
+        console.log('⏱️ Статус через 100мс:', {
+          socketIOActive: !!global.io,
+          connectedClients: global.io.engine.clientsCount
+        });
+      }, 100);
     } else {
       console.log('⚠️ global.io не определён - Socket.IO недоступен');
     }
