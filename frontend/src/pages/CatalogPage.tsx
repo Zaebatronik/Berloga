@@ -73,7 +73,6 @@ export default function CatalogPage() {
   useEffect(() => {
     const loadCountries = async () => {
       const data = await locationService.getCountries();
-      console.log('🌍 Загружены страны для фильтра:', data.slice(0, 5));
       setCountries(data);
     };
     loadCountries();
@@ -83,9 +82,7 @@ export default function CatalogPage() {
   useEffect(() => {
     const loadCities = async () => {
       if (selectedCountry) {
-        console.log('🏙️ Загружаю города для страны:', selectedCountry);
         const data = await locationService.getCities(selectedCountry);
-        console.log('🏙️ Загружены города:', data.slice(0, 5));
         setCities(data);
       } else {
         setCities([]);
@@ -202,31 +199,15 @@ export default function CatalogPage() {
   // Фильтрация и сортировка
   useEffect(() => {
     let result = [...listings];
-    
-    console.log('🔍 ФИЛЬТРАЦИЯ:', {
-      всегоОбъявлений: listings.length,
-      выбранаСтрана: selectedCountry,
-      выбранГород: selectedCity
-    });
 
     // Фильтрация по стране (только если выбрана конкретная страна)
     if (selectedCountry && selectedCountry !== '') {
-      const beforeFilter = result.length;
-      result = result.filter((listing) => {
-        console.log(`   Объявление: "${listing.title}" | Страна в БД: "${listing.country}" | Фильтр: "${selectedCountry}" | Совпадает: ${listing.country === selectedCountry}`);
-        return listing.country === selectedCountry;
-      });
-      console.log(`   После фильтра по стране: ${beforeFilter} → ${result.length}`);
+      result = result.filter((listing) => listing.country === selectedCountry);
     }
 
     // Фильтрация по городу (только если выбран конкретный город)
     if (selectedCity && selectedCity !== '') {
-      const beforeFilter = result.length;
-      result = result.filter((listing) => {
-        console.log(`   Объявление: "${listing.title}" | Город в БД: "${listing.city}" | Фильтр: "${selectedCity}" | Совпадает: ${listing.city === selectedCity}`);
-        return listing.city === selectedCity;
-      });
-      console.log(`   После фильтра по городу: ${beforeFilter} → ${result.length}`);
+      result = result.filter((listing) => listing.city === selectedCity);
     }
 
     // Умный поиск с нечётким совпадением
