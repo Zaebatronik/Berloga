@@ -105,6 +105,11 @@ export default function CatalogPage() {
         if (isMounted) {
           setListings(formattedListings);
           setFilteredListings(formattedListings);
+          
+          // Обновляем глобальный стор для синхронизации
+          const { setListings: updateGlobalListings } = useStore.getState();
+          updateGlobalListings(serverListings);
+          
           console.log(`✅ Loaded ${formattedListings.length} listings from server:`, formattedListings.map((l: Listing) => l.title));
         }
       } catch (error) {

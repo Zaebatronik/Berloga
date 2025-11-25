@@ -274,6 +274,23 @@ export default function AddListingPage() {
         });
         
         console.log('✅ Объявление сохранено на сервере:', response.data);
+        
+        // Обновляем локальный стор с данными с сервера
+        const { addListing, setListings, listings } = useStore.getState();
+        const serverListing = response.data;
+        
+        // Добавляем в стор если его там еще нет
+        const existingIndex = listings.findIndex(l => l.id === serverListing.id || l._id === serverListing._id);
+        if (existingIndex === -1) {
+          addListing(serverListing);
+          console.log('📝 Объявление добавлено в локальный стор');
+        } else {
+          // Обновляем существующее
+          const updatedListings = [...listings];
+          updatedListings[existingIndex] = serverListing;
+          setListings(updatedListings);
+          console.log('📝 Объявление обновлено в локальном сторе');
+        }
       } catch (serverError) {
         console.warn('⚠️ Сервер недоступен, сохраняем локально:', serverError);
         
@@ -290,6 +307,16 @@ export default function AddListingPage() {
 
       // Очищаем черновик после успешной публикации
       clearDraft();
+      
+      // Перезагружаем все объявления с сервера для синхронизации
+      try {
+        const allListingsResponse = await listingsAPI.getAll();
+        const { setListings } = useStore.getState();
+        setListings(allListingsResponse.data);
+        console.log('🔄 Все объявления обновлены с сервера');
+      } catch (e) {
+        console.log('⚠️ Не удалось перезагрузить все объявления:', e);
+      }
       
       // Показываем успех и переходим
       alert('✅ Объявление успешно опубликовано!');
