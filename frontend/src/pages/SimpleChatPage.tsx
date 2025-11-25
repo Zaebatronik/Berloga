@@ -576,7 +576,8 @@ export default function SimpleChatPage() {
           </div>
         ) : (
           messages.map((msg) => {
-            const isMyMessage = msg.senderId === user?.id;
+            const myUserId = user?.telegramId || user?.id;
+            const isMyMessage = msg.senderId === myUserId;
             return (
               <div
                 key={msg._id || `msg-${Math.random()}`}

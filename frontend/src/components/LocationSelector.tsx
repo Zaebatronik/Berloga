@@ -98,17 +98,31 @@ export default function LocationSelector({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleCountrySelect = (country: Country) => {
-    setCountryQuery(country.nameRu);
-    onCountryChange(country.nameRu);
-    onCityChange(''); // Сбрасываем город
-    setCityQuery('');
+  const handleCountrySelect = (country: Country | null) => {
+    if (country === null) {
+      // "Все страны"
+      setCountryQuery('');
+      onCountryChange('');
+      onCityChange('');
+      setCityQuery('');
+    } else {
+      setCountryQuery(country.nameRu);
+      onCountryChange(country.nameRu);
+      onCityChange(''); // Сбрасываем город
+      setCityQuery('');
+    }
     setShowCountryDropdown(false);
   };
 
-  const handleCitySelect = (city: City) => {
-    setCityQuery(city.nameRu);
-    onCityChange(city.nameRu);
+  const handleCitySelect = (city: City | null) => {
+    if (city === null) {
+      // "Все города"
+      setCityQuery('');
+      onCityChange('');
+    } else {
+      setCityQuery(city.nameRu);
+      onCityChange(city.nameRu);
+    }
     setShowCityDropdown(false);
   };
 
@@ -191,6 +205,28 @@ export default function LocationSelector({
               zIndex: 1000
             }}
           >
+            {/* Опция "Все страны" */}
+            <div
+              onClick={() => handleCountrySelect(null)}
+              style={{
+                padding: '12px',
+                cursor: 'pointer',
+                borderBottom: '2px solid #667eea',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                transition: 'background 0.2s',
+                background: '#f0f4ff',
+                fontWeight: '600'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = '#e0e8ff'}
+              onMouseLeave={(e) => e.currentTarget.style.background = '#f0f4ff'}
+            >
+              <span style={{ fontSize: '20px' }}>🌍</span>
+              <span style={{ fontSize: '14px', color: '#667eea' }}>Все страны</span>
+            </div>
+            
+            {/* Список стран по алфавиту */}
             {filteredCountries.slice(0, 50).map((country) => (
               <div
                 key={country.code}
@@ -285,6 +321,28 @@ export default function LocationSelector({
               zIndex: 1000
             }}
           >
+            {/* Опция "Все города" */}
+            <div
+              onClick={() => handleCitySelect(null)}
+              style={{
+                padding: '12px',
+                cursor: 'pointer',
+                borderBottom: '2px solid #667eea',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                transition: 'background 0.2s',
+                background: '#f0f4ff',
+                fontWeight: '600'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = '#e0e8ff'}
+              onMouseLeave={(e) => e.currentTarget.style.background = '#f0f4ff'}
+            >
+              <span style={{ fontSize: '20px' }}>🏙️</span>
+              <span style={{ fontSize: '14px', color: '#667eea' }}>Все города</span>
+            </div>
+
+            {/* Список городов по алфавиту */}
             {filteredCities.map((city, index) => (
               <div
                 key={index}
