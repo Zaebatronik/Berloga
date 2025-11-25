@@ -189,17 +189,28 @@ router.post('/:id/messages', async (req, res) => {
         _id: chat.messages[chat.messages.length - 1]._id // Добавляем _id из MongoDB
       };
       
+      // Определяем получателя
+      const recipientId = senderId === chat.participant1 ? chat.participant2 : chat.participant1;
+      
+      console.log('📡 Подготовка к отправке сообщения:', {
+        senderId,
+        recipientId,
+        participant1: chat.participant1,
+        participant2: chat.participant2,
+        chatRoom: chat._id.toString(),
+        personalEvent: `message-to-${recipientId}`
+      });
+      
       // Отправляем в комнату чата (всем кто в ней)
       global.io.to(chat._id.toString()).emit('new-message', messageToSend);
       console.log('📡 Событие new-message отправлено в комнату:', chat._id.toString());
       
       // Также отправляем персонально получателю (на случай если он не в комнате)
-      const recipientId = senderId === chat.participant1 ? chat.participant2 : chat.participant1;
       global.io.emit(`message-to-${recipientId}`, {
         chatId: chat._id,
         message: messageToSend
       });
-      console.log('📡 Персональное уведомление отправлено получателю:', recipientId);
+      console.log('📡 Персональное уведомление отправлено получателю:', recipientId, `(событие: message-to-${recipientId})`);
     } else {
       console.log('⚠️ global.io не определён - Socket.IO недоступен');
     }

@@ -197,6 +197,16 @@ export default function SimpleChatPage() {
           const myId = user.telegramId || user.id;
           const otherUserId = chat.participant1 === myId ? chat.participant2 : chat.participant1;
           
+          console.log('👥 Идентификация участников:', {
+            myId,
+            myTelegramId: user.telegramId,
+            myUserId: user.id,
+            participant1: chat.participant1,
+            participant2: chat.participant2,
+            otherUserId,
+            socketListener: `message-to-${myId}`
+          });
+          
           // Получаем информацию о собеседнике из participantsInfo
           const participantsInfo = chat.participantsInfo || new Map();
           const otherUserInfo = participantsInfo[otherUserId] || participantsInfo.get?.(otherUserId);
@@ -236,7 +246,11 @@ export default function SimpleChatPage() {
 
           // Слушаем новые сообщения от других пользователей (общий канал)
           socket?.on('new-message', (message: Message) => {
-            console.log('📨 Получено новое сообщение через Socket.IO:', message);
+            console.log('📨 Получено новое сообщение через Socket.IO:', {
+              senderId: message.senderId,
+              text: message.text?.substring(0, 30),
+              myId
+            });
             
             const myUserId = user.telegramId || user.id;
             
@@ -263,8 +277,14 @@ export default function SimpleChatPage() {
           });
 
           // Слушаем персональные уведомления (на случай если не в комнате)
+          console.log('🔊 Подписываемся на персональные уведомления:', `message-to-${myId}`);
           socket?.on(`message-to-${myId}`, (data: { chatId: string; message: Message }) => {
-            console.log('📨 Получено персональное уведомление:', data);
+            console.log('📨 Получено персональное уведомление:', {
+              chatId: data.chatId,
+              senderId: data.message.senderId,
+              text: data.message.text?.substring(0, 30),
+              expectedListener: `message-to-${myId}`
+            });
             
             // Проверяем что это наш чат
             if (data.chatId !== chat._id) {
