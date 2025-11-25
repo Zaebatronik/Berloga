@@ -37,13 +37,16 @@ export default function SimpleChatPage() {
   const loadDirectChat = async (chatIdParam: string) => {
     try {
       console.log('🔍 Загрузка прямого чата:', chatIdParam);
+      setLoading(true);
       
       // Подключаем Socket.IO если еще не подключен
       if (!socket) {
+        console.log('🔌 Подключение к Socket.IO...');
         socket = io(API_URL, {
           reconnection: true,
           reconnectionDelay: 1000,
-          reconnectionAttempts: 10
+          reconnectionAttempts: 10,
+          timeout: 10000
         });
         
         socket.on('connect', () => {
@@ -60,11 +63,24 @@ export default function SimpleChatPage() {
           console.log('🔄 Переподключение Socket.IO...');
           setConnectionStatus('connecting');
         });
+
+        socket.on('connect_error', (error) => {
+          console.error('❌ Ошибка подключения Socket.IO:', error);
+          setConnectionStatus('disconnected');
+        });
       }
       
-      // Загружаем чат с сервера
+      // Загружаем чат с сервера с таймаутом
+      console.log('📥 Запрос чата с сервера:', `${API_URL}/api/chats/${chatIdParam}`);
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 сек таймаут
+      
       const response = await chatsAPI.getById(chatIdParam);
+      clearTimeout(timeoutId);
+      
       const chat = response.data;
+      console.log('✅ Чат получен:', chat);
       
       console.log('✅ Чат загружен:', chat._id);
       
@@ -95,9 +111,22 @@ export default function SimpleChatPage() {
       // Слушаем события
       setupSocketListeners(chat._id);
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Ошибка загрузки чата:', error);
-      alert('Не удалось загрузить чат');
+      setLoading(false);
+      
+      // Определяем тип ошибки
+      let errorMessage = 'Не удалось загрузить чат';
+      
+      if (error.name === 'AbortError') {
+        errorMessage = 'Превышено время ожидания. Проверьте подключение к интернету.';
+      } else if (error.response) {
+        errorMessage = `Ошибка сервера: ${error.response.status}`;
+      } else if (error.request) {
+        errorMessage = 'Нет ответа от сервера. Проверьте подключение.';
+      }
+      
+      alert(errorMessage);
       navigate('/chats');
     }
   };
@@ -561,8 +590,74 @@ export default function SimpleChatPage() {
     setMessages(prev => prev.filter(m => m._id !== messageId));
   };
 
-  if (loading || !listing) {
-    return <div style={{ padding: '20px', textAlign: 'center' }}>Загрузка чата...</div>;
+  // Показываем загрузку только если реально грузим
+  if (loading) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        flexDirection: 'column',
+        alignItems: 'center', 
+        justifyContent: 'center',
+        height: '100vh',
+        padding: '20px',
+        textAlign: 'center' 
+      }}>
+        <div style={{
+          width: '48px',
+          height: '48px',
+          border: '4px solid rgba(102, 126, 234, 0.1)',
+          borderTopColor: '#667eea',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite',
+          marginBottom: '16px'
+        }} />
+        <p style={{ fontSize: '16px', color: '#6b7280' }}>
+          {connectionStatus === 'connecting' ? 'Подключение к чату...' : 'Загрузка сообщений...'}
+        </p>
+        <style>{`
+          @keyframes spin {
+            to { transform: rotate(360deg); }
+          }
+        `}</style>
+      </div>
+    );
+  }
+
+  // Для прямого чата listing может быть null - это нормально
+  // Проверяем только наличие chatId и otherUser
+  if (!chatId || !otherUser) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        flexDirection: 'column',
+        alignItems: 'center', 
+        justifyContent: 'center',
+        height: '100vh',
+        padding: '20px',
+        textAlign: 'center' 
+      }}>
+        <div style={{ fontSize: '48px', marginBottom: '16px' }}>⚠️</div>
+        <h3 style={{ fontSize: '20px', fontWeight: '600', marginBottom: '8px' }}>Чат не найден</h3>
+        <p style={{ color: '#6b7280', marginBottom: '24px' }}>
+          Не удалось загрузить информацию о чате
+        </p>
+        <button
+          onClick={() => navigate('/chats')}
+          style={{
+            padding: '12px 24px',
+            background: '#667eea',
+            color: 'white',
+            border: 'none',
+            borderRadius: '12px',
+            fontSize: '16px',
+            fontWeight: '600',
+            cursor: 'pointer'
+          }}
+        >
+          Вернуться к чатам
+        </button>
+      </div>
+    );
   }
 
   return (
@@ -628,7 +723,7 @@ export default function SimpleChatPage() {
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap'
           }}>
-            💬 {listing.title}
+            {listing ? `💬 ${listing.title}` : '💬 Личный чат'}
           </div>
         </div>
 
@@ -842,34 +937,39 @@ export default function SimpleChatPage() {
         </button>
       </div>
 
-      {/* Кнопка обмена контактами */}
-      <div style={{ 
-        padding: '12px 16px', 
-        paddingTop: 0,
-        paddingBottom: 'max(12px, env(safe-area-inset-bottom))'
-      }}>
-        <button
-          onClick={() => {
-            const telegramUrl = `https://t.me/user?id=${listing.userId}`;
-            if (window.Telegram?.WebApp) {
-              window.Telegram.WebApp.openTelegramLink(telegramUrl);
-            }
-          }}
-          style={{
-            width: '100%',
-            padding: '12px',
-            borderRadius: '12px',
-            border: 'none',
-            background: '#10b981',
-            color: 'white',
-            fontSize: '14px',
-            fontWeight: 600,
-            cursor: 'pointer'
-          }}
-        >
-          📞 Открыть контакт продавца
-        </button>
-      </div>
+      {/* Кнопка обмена контактами - показываем только если есть данные */}
+      {(listing?.userId || otherUser?.id) && (
+        <div style={{ 
+          padding: '12px 16px', 
+          paddingTop: 0,
+          paddingBottom: 'max(12px, env(safe-area-inset-bottom))'
+        }}>
+          <button
+            onClick={() => {
+              const userId = listing?.userId || otherUser?.id;
+              const telegramUrl = `https://t.me/user?id=${userId}`;
+              if (window.Telegram?.WebApp) {
+                window.Telegram.WebApp.openTelegramLink(telegramUrl);
+              } else {
+                window.open(telegramUrl, '_blank');
+              }
+            }}
+            style={{
+              width: '100%',
+              padding: '12px',
+              borderRadius: '12px',
+              border: 'none',
+              background: '#10b981',
+              color: 'white',
+              fontSize: '14px',
+              fontWeight: 600,
+              cursor: 'pointer'
+            }}
+          >
+            📞 Открыть контакт {listing ? 'продавца' : 'собеседника'}
+          </button>
+        </div>
+      )}
 
       {/* CSS для анимации точек */}
       <style>{`
