@@ -444,35 +444,18 @@ export default function SimpleChatPage() {
 
     init();
 
-    // Периодическое обновление чата с сервера (каждые 5 секунд)
-    const intervalId = setInterval(async () => {
-      if (chatId && !chatId.startsWith('chat_')) {
-        try {
-          const response = await chatsAPI.getById(chatId);
-          const serverMessages = response.data.messages || [];
-          
-          // Обновляем только если есть новые сообщения
-          if (serverMessages.length > messages.length) {
-            console.log(`🔄 Обновлено ${serverMessages.length - messages.length} новых сообщений`);
-            setMessages(serverMessages);
-          }
-        } catch (error) {
-          console.log('⚠️ Не удалось обновить чат:', error);
-        }
-      }
-    }, 5000);
-
     // Очистка при размонтировании
     return () => {
       socket?.off('new-message');
-      clearInterval(intervalId);
     };
-  }, [listingId, user, listings, navigate, chatId, messages.length]);
+  }, [listingId, user, listings, navigate]);
 
-  // Автопрокрутка
+  // Автопрокрутка (используем requestAnimationFrame для плавности)
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    requestAnimationFrame(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    });
+  }, [messages.length]);
 
   // Отправка индикатора печати
   const handleTyping = () => {
