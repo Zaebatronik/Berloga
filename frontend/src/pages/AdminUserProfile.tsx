@@ -59,35 +59,44 @@ export default function AdminUserProfile() {
       console.log('🔍 AdminUserProfile: Загружаю данные для userId:', userId);
       
       // Загружаем данные пользователя
-      let foundUser = allUsers.find((u: any) => 
-        u.id === userId || u.telegramId === userId || u._id === userId
-      );
+      let foundUser = allUsers.find((u: any) => {
+        const uId = u.id || u._id?.toString() || u.telegramId;
+        return uId === userId || u.telegramId === userId || u._id?.toString() === userId;
+      });
 
       if (!foundUser) {
+        console.log('🔍 Пользователь не найден в store, загружаю с сервера...');
         const usersResponse = await fetch(`${API_URL}/api/users`);
         if (usersResponse.ok) {
           const serverUsers = await usersResponse.json();
-          foundUser = serverUsers.find((u: any) => 
-            u.id === userId || u.telegramId === userId || u._id === userId
-          );
+          console.log('📥 Получено пользователей с сервера:', serverUsers.length);
+          foundUser = serverUsers.find((u: any) => {
+            const uId = u.id || u._id?.toString() || u.telegramId;
+            console.log('Проверка:', { uId, telegramId: u.telegramId, _id: u._id, userId });
+            return uId === userId || u.telegramId === userId || u._id?.toString() === userId;
+          });
         }
       }
 
       if (!foundUser) {
+        console.error('❌ Пользователь не найден! userId:', userId);
         alert('Пользователь не найден');
         navigate('/admin');
         return;
       }
 
+      console.log('✅ Найден пользователь:', foundUser);
+
+      const foundUserAny = foundUser as any;
       const userDataFormatted: UserData = {
-        id: foundUser.id,
-        telegramId: foundUser.telegramId || foundUser.id,
-        nickname: foundUser.nickname,
-        country: foundUser.country,
-        city: foundUser.city,
-        createdAt: foundUser.createdAt instanceof Date ? foundUser.createdAt.toISOString() : foundUser.createdAt,
-        telegramUsername: foundUser.telegramUsername,
-        banned: (foundUser as any).banned || false,
+        id: foundUserAny.telegramId || foundUserAny._id?.toString() || foundUserAny.id,
+        telegramId: foundUserAny.telegramId || foundUserAny._id?.toString() || foundUserAny.id,
+        nickname: foundUserAny.nickname,
+        country: foundUserAny.country,
+        city: foundUserAny.city,
+        createdAt: foundUserAny.createdAt instanceof Date ? foundUserAny.createdAt.toISOString() : foundUserAny.createdAt,
+        telegramUsername: foundUserAny.telegramUsername,
+        banned: foundUserAny.banned || false,
       };
       
       setUserData(userDataFormatted);
