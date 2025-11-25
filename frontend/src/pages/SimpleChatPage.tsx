@@ -108,15 +108,22 @@ export default function SimpleChatPage() {
     
     console.log('🎧 Настройка слушателей для чата:', {
       chatIdParam,
-      myUserId
+      myUserId,
+      socketConnected: socket?.connected,
+      socketId: socket?.id
     });
 
     // ЕДИНСТВЕННЫЙ обработчик - слушаем broadcast всем
     socket?.on('new-message', (data: any) => {
-      console.log('📨 Получено broadcast сообщение:', {
+      console.log('📨 ============ ПОЛУЧЕНО BROADCAST СООБЩЕНИЕ ============');
+      console.log('📨 Полные данные:', JSON.stringify(data, null, 2));
+      console.log('📨 Тип данных:', typeof data);
+      console.log('📨 Детали:', {
         receivedData: data,
         hasMessage: !!data.message,
-        hasChatId: !!data.chatId
+        hasChatId: !!data.chatId,
+        messageChatId: data.chatId,
+        currentChatId: chatIdParam
       });
       
       // Проверяем формат данных
@@ -481,12 +488,22 @@ export default function SimpleChatPage() {
 
       // Отправляем на сервер
       try {
-        console.log('🌐 Отправка на сервер...');
+        console.log('🌐 ============ ОТПРАВКА НА СЕРВЕР ============');
+        console.log('🌐 URL:', `${API_URL}/api/chats/${chatId}/messages`);
+        console.log('🌐 Данные:', JSON.stringify(messageData, null, 2));
+        console.log('🌐 ChatId:', chatId);
+        console.log('🌐 Socket подключён?', socket?.connected);
+        console.log('🌐 Socket ID:', socket?.id);
+        
         const response = await chatsAPI.sendMessage(chatId, messageData);
-        console.log('✅ Ответ от сервера:', {
+        
+        console.log('✅ ============ ОТВЕТ ОТ СЕРВЕРА ============');
+        console.log('✅ Полный ответ:', JSON.stringify(response.data, null, 2));
+        console.log('✅ Детали:', {
           chatId: response.data._id,
           messagesCount: response.data.messages?.length,
-          participants: response.data.participants
+          participant1: response.data.participant1,
+          participant2: response.data.participant2
         });
         
         // Обновляем сообщения с сервера (чтобы получить правильные _id)
