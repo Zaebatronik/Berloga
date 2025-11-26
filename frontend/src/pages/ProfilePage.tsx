@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useStore } from '../store';
 import { getTelegramId } from '../utils/telegram';
-import { usersAPI } from '../services/api';
+import { userAPI } from '../services/api';
 import '../styles/ProfilePage.css';
 
 // Доступные страны (по языкам)
@@ -30,7 +30,7 @@ const AVAILABLE_LANGUAGES = [
 
 export default function ProfilePage() {
   const navigate = useNavigate();
-  const { t, i18n } = useTranslation();
+  const { i18n } = useTranslation();
   const { user, listings, setUser } = useStore();
   
   const [showCountryModal, setShowCountryModal] = useState(false);
@@ -82,7 +82,7 @@ export default function ProfilePage() {
     try {
       if (user) {
         const updatedUser = { ...user, country: countryCode };
-        await usersAPI.updateUser(user.id, { country: countryCode });
+        await userAPI.updateProfile(user.id, { country: countryCode });
         setUser(updatedUser);
         setShowCountryModal(false);
         if (window.Telegram?.WebApp?.HapticFeedback) {
@@ -98,7 +98,7 @@ export default function ProfilePage() {
     try {
       if (user) {
         const updatedUser = { ...user, radius: tempRadius };
-        await usersAPI.updateUser(user.id, { radius: tempRadius });
+        await userAPI.updateProfile(user.id, { radius: tempRadius });
         setUser(updatedUser);
         setShowRadiusModal(false);
         if (window.Telegram?.WebApp?.HapticFeedback) {
@@ -353,7 +353,7 @@ export default function ProfilePage() {
       <div className="profile-footer">
         <div className="footer-info">
           <p>🐻 Берлога Marketplace</p>
-          <p className="footer-version">Версия 1.0.1</p>
+          <p className="footer-version">Версия 1.0.2</p>
         </div>
       </div>
 
