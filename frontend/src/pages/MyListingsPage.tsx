@@ -224,29 +224,29 @@ export default function MyListingsPage() {
 
                     <div className="listing-actions">
                       <button 
-                        className="action-btn chat-btn"
-                        onClick={() => navigate(`/chat/${listing.id}`)}
-                        title="Открыть чаты"
+                        className="action-btn view-btn"
+                        onClick={() => navigate(`/listing/${listing.id}`)}
+                        title="Просмотреть объявление"
                         style={{
                           background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                           color: 'white'
                         }}
                       >
-                        💬
+                        👁️
                       </button>
                       <button 
-                        className="action-btn edit-btn"
-                        onClick={() => handleEdit(listing.id)}
-                        title={t('common.edit')}
+                        className="action-btn chat-btn"
+                        onClick={() => navigate(`/chat/${listing.id}`)}
+                        title="Открыть чаты"
                       >
-                        ✏️
+                        💬
                       </button>
                       <button 
                         className="action-btn toggle-btn"
                         onClick={() => handleToggleStatus(listing.id)}
                         title={listing.status === 'active' ? t('myListings.hide') : t('myListings.show')}
                       >
-                        {listing.status === 'active' ? '👁️' : '👁️‍🗨️'}
+                        {listing.status === 'active' ? '🔓' : '🔒'}
                       </button>
                       <button 
                         className="action-btn delete-btn"
