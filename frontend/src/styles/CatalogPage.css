@@ -21,16 +21,16 @@
   z-index: 10;
   background: rgba(255, 255, 255, 0.15);
   backdrop-filter: blur(20px);
-  padding: 10px 12px;
+  padding: 8px 10px 6px 10px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .catalog-title {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
   color: white;
-  margin: 0 0 10px 0;
+  margin: 0;
   text-align: center;
   text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
 }
@@ -39,15 +39,15 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .search-input {
   flex: 1;
-  padding: 10px 12px;
+  padding: 8px 10px;
   border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: 12px;
-  font-size: 14px;
+  border-radius: 10px;
+  font-size: 13px;
   outline: none;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   background: rgba(255, 255, 255, 0.9);
@@ -64,13 +64,14 @@
 }
 
 .filter-button {
-  padding: 10px 14px;
+  padding: 8px 12px;
   background: rgba(255, 255, 255, 0.25);
   backdrop-filter: blur(10px);
   color: white;
   border: 2px solid rgba(255, 255, 255, 0.4);
-  border-radius: 12px;
+  border-radius: 10px;
   font-weight: 600;
+  font-size: 13px;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
@@ -104,12 +105,12 @@
 
 .category-chip {
   flex-shrink: 0;
-  padding: 6px 14px;
+  padding: 5px 12px;
   background: rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(10px);
   border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: 20px;
-  font-size: 13px;
+  border-radius: 18px;
+  font-size: 12px;
   font-weight: 600;
   color: white;
   cursor: pointer;
@@ -168,15 +169,15 @@
 .catalog-content {
   flex: 1;
   overflow-y: auto;
-  padding: 10px;
+  padding: 6px 8px;
   -webkit-overflow-scrolling: touch;
 }
 
 .listings-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: 6px;
+  margin-bottom: 8px;
 }
 
 .listing-card {

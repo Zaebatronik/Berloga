@@ -378,7 +378,7 @@ export default function CatalogPage() {
   return (
     <div className="catalog-page">
       <div className="catalog-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
           <button
             onClick={() => navigate('/')}
             style={{
@@ -541,18 +541,6 @@ export default function CatalogPage() {
               {categoryEmojis[category]} {t(`categories.${category}`)}
             </button>
           ))}
-        </div>
-
-        <div className="catalog-controls">
-          <span className="results-count">
-            {filteredListings.length} {t('catalog.noResults').split(' ')[0]}
-          </span>
-          <select className="sort-select" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-            <option value="date-desc">Сначала новые</option>
-            <option value="date-asc">Сначала старые</option>
-            <option value="price-asc">Цена: по возрастанию</option>
-            <option value="price-desc">Цена: по убыванию</option>
-          </select>
         </div>
       </div>
 
