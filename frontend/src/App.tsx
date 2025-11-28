@@ -98,21 +98,33 @@ function App() {
 
     // Автоматический вход по Telegram ID
     const autoLogin = async () => {
-      // ВРЕМЕННО ОТКЛЮЧЕН для принудительной регистрации всех пользователей
-      console.log('⛔ Автологин временно отключен - требуется регистрация');
-      return;
-      
-      // КРИТИЧНО: Проверяем флаг skip-autologin (устанавливается после сброса версии)
-      const skipAutoLogin = sessionStorage.getItem('skip-autologin');
-      if (skipAutoLogin === 'true') {
-        console.log('⛔ Автологин пропущен: требуется регистрация после сброса версии');
-        sessionStorage.removeItem('skip-autologin');
-        return;
-      }
-      
       try {
         const telegramId = getTelegramId();
         
+        // Если пользователь считается зарегистрированным - проверяем его в базе
+        if (telegramId && isRegistered) {
+          console.log('🔍 Проверка существования пользователя в базе:', telegramId);
+          
+          try {
+            const { userAPI } = await import('./services/api');
+            const existingUser = await userAPI.getUserByTelegramId(telegramId);
+            
+            if (!existingUser) {
+              console.log('❌ Пользователь не найден в базе - требуется регистрация');
+              // Очищаем localStorage и сбрасываем состояние
+              useStore.getState().logout();
+              return;
+            }
+            
+            console.log('✅ Пользователь найден в базе:', existingUser.nickname);
+          } catch (error) {
+            console.error('❌ Ошибка проверки пользователя:', error);
+            // При ошибке API очищаем состояние
+            useStore.getState().logout();
+          }
+        }
+        
+        // Автологин для незарегистрированных
         if (telegramId && !isRegistered) {
           console.log('🔑 Проверка регистрации по Telegram ID:', telegramId);
           
