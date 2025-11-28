@@ -4,10 +4,16 @@ const Chat = require('../models/Chat');
 const Listing = require('../models/Listing');
 const { verifyTelegramAuth, checkNotBanned, requireRegistered } = require('../middleware/auth');
 
-// Получить все чаты пользователя
-router.get('/user/:userId', async (req, res) => {
+// Получить все чаты пользователя (только для зарегистрированных)
+router.get('/user/:userId', verifyTelegramAuth, requireRegistered, async (req, res) => {
   try {
     const { userId } = req.params;
+    
+    // Пользователь может получить только СВОИ чаты
+    if (req.userId !== userId) {
+      return res.status(403).json({ error: 'Можно просматривать только свои чаты' });
+    }
+    
     console.log('📋 Получение всех чатов для пользователя:', userId);
     
     // Ищем все чаты где пользователь - participant1 ИЛИ participant2
@@ -114,8 +120,8 @@ router.post('/find-or-create', verifyTelegramAuth, requireRegistered, checkNotBa
   }
 });
 
-// Получить конкретный чат
-router.get('/:id', async (req, res) => {
+// Получить конкретный чат (только для участников)
+router.get('/:id', verifyTelegramAuth, requireRegistered, async (req, res) => {
   try {
     console.log('🔍 Получение чата по ID:', req.params.id);
     const chat = await Chat.findById(req.params.id);
@@ -123,6 +129,12 @@ router.get('/:id', async (req, res) => {
       console.log('❌ Чат не найден:', req.params.id);
       return res.status(404).json({ message: 'Чат не найден' });
     }
+    
+    // Проверяем что пользователь - участник чата
+    if (req.userId !== chat.participant1 && req.userId !== chat.participant2) {
+      return res.status(403).json({ error: 'Можно просматривать только свои чаты' });
+    }
+    
     console.log(`✅ Чат найден: ${chat._id}, сообщений: ${chat.messages.length}, участники: ${chat.participant1} <-> ${chat.participant2}`);
     res.json(chat);
   } catch (error) {

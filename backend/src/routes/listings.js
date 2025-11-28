@@ -67,7 +67,7 @@ router.get('/', async (req, res) => {
 });
 
 // Получить объявление по ID
-router.get('/:id', async (req, res) => {
+router.get('/:id', verifyTelegramAuth, requireRegistered, async (req, res) => {
   try {
     console.log('🔍 Поиск объявления по ID:', req.params.id);
     
@@ -107,7 +107,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // Получить объявления пользователя
-router.get('/user/:userId', async (req, res) => {
+router.get('/user/:userId', verifyTelegramAuth, requireRegistered, async (req, res) => {
   try {
     console.log('👤 Запрос объявлений пользователя:', req.params.userId);
     const listings = await Listing.find({ userId: req.params.userId }).sort({ createdAt: -1 }).lean();
@@ -120,7 +120,7 @@ router.get('/user/:userId', async (req, res) => {
 });
 
 // Получить ВСЕ объявления (для админа) - включая скрытые
-router.get('/admin/all', async (req, res) => {
+router.get('/admin/all', verifyTelegramAuth, requireAdmin, async (req, res) => {
   try {
     console.log('👑 Админ: запрос всех объявлений');
     const listings = await Listing.find({}).sort({ createdAt: -1 }).lean();
@@ -296,7 +296,7 @@ router.delete('/:id', verifyTelegramAuth, requireRegistered, async (req, res) =>
 });
 
 // Получить список уникальных стран
-router.get('/locations/countries', async (req, res) => {
+router.get('/locations/countries', verifyTelegramAuth, requireRegistered, async (req, res) => {
   try {
     const countries = await Listing.distinct('country', { status: 'active' });
     console.log('🌍 Список стран:', countries);
@@ -308,7 +308,7 @@ router.get('/locations/countries', async (req, res) => {
 });
 
 // Получить список уникальных городов для страны
-router.get('/locations/cities', async (req, res) => {
+router.get('/locations/cities', verifyTelegramAuth, requireRegistered, async (req, res) => {
   try {
     const { country } = req.query;
     const query = { status: 'active' };

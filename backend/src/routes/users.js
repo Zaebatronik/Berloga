@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
-const { verifyTelegramAuth, requireAdmin, checkNotBanned } = require('../middleware/auth');
+const { verifyTelegramAuth, requireAdmin, requireRegistered, checkNotBanned } = require('../middleware/auth');
 
 // Получить всех пользователей (для админа)
 router.get('/', async (req, res) => {
@@ -136,7 +136,7 @@ router.get('/check-nickname/:nickname', async (req, res) => {
 });
 
 // Получение пользователя по Telegram ID (для проверки существования)
-router.get('/telegram/:telegramId', async (req, res) => {
+router.get('/telegram/:telegramId', verifyTelegramAuth, requireRegistered, async (req, res) => {
   try {
     const user = await User.findOne({ telegramId: req.params.telegramId });
     
@@ -151,7 +151,7 @@ router.get('/telegram/:telegramId', async (req, res) => {
 });
 
 // Получение профиля по Telegram ID или MongoDB ID
-router.get('/:id', async (req, res) => {
+router.get('/:id', verifyTelegramAuth, requireRegistered, async (req, res) => {
   try {
     let user;
     
@@ -174,7 +174,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // Обновление профиля (только сам пользователь может редактировать свой профиль)
-router.put('/:id', verifyTelegramAuth, async (req, res) => {
+router.put('/:id', verifyTelegramAuth, requireRegistered, async (req, res) => {
   try {
     // ✅ Проверяем что пользователь редактирует свой профиль
     if (req.userId !== req.params.id) {

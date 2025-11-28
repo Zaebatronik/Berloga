@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const Report = require('../models/Report');
-const { verifyTelegramAuth, requireAdmin } = require('../middleware/auth');
+const { verifyTelegramAuth, requireAdmin, requireRegistered } = require('../middleware/auth');
 
 // Создать жалобу
-router.post('/', async (req, res) => {
+router.post('/', verifyTelegramAuth, requireRegistered, async (req, res) => {
   try {
     const report = new Report(req.body);
     await report.save();
@@ -15,7 +15,7 @@ router.post('/', async (req, res) => {
 });
 
 // Получить все жалобы (для модераторов)
-router.get('/', async (req, res) => {
+router.get('/', verifyTelegramAuth, requireAdmin, async (req, res) => {
   try {
     const reports = await Report.find().sort({ createdAt: -1 });
     res.json(reports);
@@ -25,7 +25,7 @@ router.get('/', async (req, res) => {
 });
 
 // Обновить статус жалобы
-router.patch('/:id/status', async (req, res) => {
+router.patch('/:id/status', verifyTelegramAuth, requireAdmin, async (req, res) => {
   try {
     const report = await Report.findByIdAndUpdate(
       req.params.id,

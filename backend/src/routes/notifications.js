@@ -1,11 +1,18 @@
 const express = require('express');
 const router = express.Router();
 const Notification = require('../models/Notification');
+const { verifyTelegramAuth, requireAdmin, requireRegistered } = require('../middleware/auth');
 
 // Получить все уведомления пользователя
-router.get('/:userId', async (req, res) => {
+router.get('/:userId', verifyTelegramAuth, requireRegistered, async (req, res) => {
   try {
     const { userId } = req.params;
+    
+    // Ownership check: пользователь может видеть только свои уведомления
+    if (req.userId !== userId) {
+      return res.status(403).json({ error: 'Access denied: не можете видеть чужие уведомления' });
+    }
+    
     const { limit = 50, skip = 0, unreadOnly } = req.query;
 
     const query = { userId: parseInt(userId) };
@@ -33,7 +40,7 @@ router.get('/:userId', async (req, res) => {
 });
 
 // Отметить уведомление как прочитанное
-router.patch('/:notificationId/read', async (req, res) => {
+router.patch('/:notificationId/read', verifyTelegramAuth, requireRegistered, async (req, res) => {
   try {
     const { notificationId } = req.params;
     
@@ -55,9 +62,14 @@ router.patch('/:notificationId/read', async (req, res) => {
 });
 
 // Отметить все уведомления пользователя как прочитанные
-router.patch('/user/:userId/read-all', async (req, res) => {
+router.patch('/user/:userId/read-all', verifyTelegramAuth, requireRegistered, async (req, res) => {
   try {
     const { userId } = req.params;
+    
+    // Ownership check
+    if (req.userId !== userId) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
     
     const result = await Notification.updateMany(
       { userId: parseInt(userId), read: false },
@@ -75,7 +87,7 @@ router.patch('/user/:userId/read-all', async (req, res) => {
 });
 
 // Создать новое уведомление
-router.post('/', async (req, res) => {
+router.post('/', verifyTelegramAuth, requireAdmin, async (req, res) => {
   try {
     const { userId, type, title, message, relatedId, relatedType } = req.body;
 
@@ -97,7 +109,7 @@ router.post('/', async (req, res) => {
 });
 
 // Удалить уведомление
-router.delete('/:notificationId', async (req, res) => {
+router.delete('/:notificationId', verifyTelegramAuth, requireRegistered, async (req, res) => {
   try {
     const { notificationId } = req.params;
     
@@ -115,9 +127,14 @@ router.delete('/:notificationId', async (req, res) => {
 });
 
 // Удалить все прочитанные уведомления пользователя
-router.delete('/user/:userId/clear-read', async (req, res) => {
+router.delete('/user/:userId/clear-read', verifyTelegramAuth, requireRegistered, async (req, res) => {
   try {
     const { userId } = req.params;
+    
+    // Ownership check
+    if (req.userId !== userId) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
     
     const result = await Notification.deleteMany({
       userId: parseInt(userId),
