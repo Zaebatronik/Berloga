@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware';
 import { User, Listing, Chat, Language } from '@/types';
 
 // Версия хранилища - при изменении все пользователи будут разлогинены
-const STORAGE_VERSION = 2; // Увеличили с 1 до 2 для сброса сессий
+const STORAGE_VERSION = 3; // Увеличили до 3 для принудительного сброса
 
 interface AppState {
   // User
@@ -139,10 +139,18 @@ export const useStore = create<AppState>()(
     {
       name: 'kupyprodai-storage',
       version: STORAGE_VERSION,
-      // При изменении версии - очищаем все данные
+      // При изменении версии - полная очистка и перезапуск
       migrate: (persistedState: any, version: number) => {
-        if (version !== STORAGE_VERSION) {
-          console.log(`🔄 Версия изменилась (${version} → ${STORAGE_VERSION}), очищаем данные...`);
+        console.log(`🔍 Миграция: текущая версия ${version}, нужна ${STORAGE_VERSION}`);
+        
+        // Если версия не совпадает - полная очистка
+        if (version < STORAGE_VERSION) {
+          console.log(`🔄 Версия устарела! Очищаем все данные...`);
+          
+          // Полностью очищаем localStorage
+          localStorage.clear();
+          
+          // Возвращаем начальное состояние
           return {
             user: null,
             isRegistered: false,
@@ -159,6 +167,7 @@ export const useStore = create<AppState>()(
             },
           };
         }
+        
         return persistedState;
       },
       // Обработка ошибок переполнения localStorage
