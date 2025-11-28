@@ -49,6 +49,8 @@ export const userAPI = {
   register: (data: any) => api.post('/users/register', data),
   getProfile: (userId: string) => api.get(`/users/${userId}`),
   getById: (userId: string) => api.get(`/users/${userId}`),
+  getUserByTelegramId: (telegramId: string) => 
+    api.get(`/users/telegram/${telegramId}`),
   updateProfile: (userId: string, data: any) => api.put(`/users/${userId}`, data),
   deleteProfile: (userId: string) => api.delete(`/users/${userId}`),
   checkNickname: (nickname: string) => 

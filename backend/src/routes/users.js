@@ -124,6 +124,21 @@ router.get('/check-nickname/:nickname', async (req, res) => {
   }
 });
 
+// Получение пользователя по Telegram ID (для проверки существования)
+router.get('/telegram/:telegramId', async (req, res) => {
+  try {
+    const user = await User.findOne({ telegramId: req.params.telegramId });
+    
+    if (!user) {
+      return res.status(404).json({ message: 'Пользователь не найден' });
+    }
+    
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ message: 'Ошибка сервера', error: error.message });
+  }
+});
+
 // Получение профиля по Telegram ID или MongoDB ID
 router.get('/:id', async (req, res) => {
   try {

@@ -12,6 +12,7 @@ interface AppState {
   setUser: (user: User | null) => void;
   updateUser: (updates: Partial<User>) => void;
   clearUser: () => void;
+  logout: () => void;
 
   // Language
   language: Language;
@@ -63,6 +64,13 @@ export const useStore = create<AppState>()(
           user: state.user ? { ...state.user, ...updates } : null,
         })),
       clearUser: () => set({ user: null, isRegistered: false }),
+      logout: () => set({ 
+        user: null, 
+        isRegistered: false,
+        listings: [],
+        favorites: [],
+        chats: []
+      }),
 
       // Language
       language: 'ru',
