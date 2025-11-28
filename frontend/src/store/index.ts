@@ -137,7 +137,7 @@ export const useStore = create<AppState>()(
         }),
     }),
     {
-      name: 'kupyprodai-storage',
+      name: 'kupyprodai-storage-v3', // Изменили название для принудительного сброса
       version: STORAGE_VERSION,
       // При изменении версии - полная очистка и перезапуск
       migrate: (persistedState: any, version: number) => {
