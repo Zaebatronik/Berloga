@@ -80,6 +80,7 @@ function App() {
   const { isRegistered, language, user } = useStore();
   const [isBanned, setIsBanned] = useState(false);
   const [i18nReady, setI18nReady] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false); // Флаг проверки аутентификации
 
   useEffect(() => {
     // Инициализация Telegram Web App
@@ -101,31 +102,45 @@ function App() {
       try {
         const telegramId = getTelegramId();
         
-        // Если пользователь считается зарегистрированным - проверяем его в базе
+        // КРИТИЧНО: Если пользователь считается зарегистрированным - ОБЯЗАТЕЛЬНО проверяем его в базе
         if (telegramId && isRegistered) {
-          console.log('🔍 Проверка существования пользователя в базе:', telegramId);
+          console.log('🔍 ОБЯЗАТЕЛЬНАЯ проверка существования пользователя в базе:', telegramId);
           
           try {
             const { userAPI } = await import('./services/api');
             const response = await userAPI.getUserByTelegramId(telegramId);
             
             if (!response.data) {
-              console.log('❌ Пользователь не найден в базе - требуется регистрация');
+              console.log('❌ Пользователь не найден в базе - ВЫХОД И РЕГИСТРАЦИЯ');
               // Очищаем localStorage и сбрасываем состояние
               useStore.getState().logout();
+              setAuthChecked(true);
               return;
             }
             
             console.log('✅ Пользователь найден в базе:', response.data.nickname);
+            
+            // Проверяем бан
+            if (response.data.banned) {
+              console.log('🚫 Пользователь забанен');
+              setIsBanned(true);
+            }
+            
+            setAuthChecked(true);
           } catch (error: any) {
             if (error.response?.status === 404) {
-              console.log('❌ Пользователь не найден в базе - требуется регистрация');
+              console.log('❌ Пользователь не найден в базе - ВЫХОД И РЕГИСТРАЦИЯ');
               // Очищаем localStorage и сбрасываем состояние
               useStore.getState().logout();
             } else {
               console.error('❌ Ошибка проверки пользователя:', error);
+              // При ошибке сервера также выходим для безопасности
+              useStore.getState().logout();
             }
+            setAuthChecked(true);
           }
+        } else {
+          setAuthChecked(true);
         }
         
         // Автологин для незарегистрированных
@@ -221,8 +236,8 @@ function App() {
     return () => clearInterval(interval);
   }, [isRegistered, user]);
 
-  // Ожидание инициализации i18n
-  if (!i18nReady) {
+  // Ожидание инициализации i18n и проверки аутентификации
+  if (!i18nReady || !authChecked) {
     return (
       <div style={{
         display: 'flex',
@@ -232,9 +247,16 @@ function App() {
         background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
         color: 'white',
         fontSize: '18px',
-        fontWeight: '600'
+        fontWeight: '600',
+        flexDirection: 'column',
+        gap: '16px'
       }}>
-        🐻 Загрузка...
+        <div>🐻 Загрузка...</div>
+        {isRegistered && !authChecked && (
+          <div style={{ fontSize: '14px', opacity: 0.8 }}>
+            Проверка пользователя в базе данных...
+          </div>
+        )}
       </div>
     );
   }
