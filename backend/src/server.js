@@ -116,28 +116,33 @@ console.log('   PORT:', PORT);
 console.log('   MONGODB_URI:', MONGODB_URI ? `${MONGODB_URI.substring(0, 20)}...` : 'НЕ УСТАНОВЛЕН');
 console.log('   NODE_ENV:', process.env.NODE_ENV);
 
+// 🔥 КРИТИЧНО: Запускаем сервер СРАЗУ, не ждём MongoDB
+// Render требует чтобы порт открылся в течение 60 секунд
+httpServer.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Сервер запущен на порту ${PORT}`);
+  console.log(`📡 Доступен по адресу: http://0.0.0.0:${PORT}`);
+  console.log('🔄 Роуты доступны:');
+  console.log('   GET  /health');
+  console.log('   GET  /users');
+  console.log('   POST /users/register');
+  console.log('   GET  /api/users (legacy)');
+});
+
+// Подключаемся к MongoDB асинхронно (не блокируем запуск сервера)
 mongoose
   .connect(MONGODB_URI, {
-    serverSelectionTimeoutMS: 5000,
+    serverSelectionTimeoutMS: 30000, // Увеличиваем таймаут до 30 сек
     socketTimeoutMS: 45000,
   })
   .then(() => {
     console.log('✅ MongoDB успешно подключен');
     console.log('📊 База данных готова к работе');
-    httpServer.listen(PORT, '0.0.0.0', () => {
-      console.log(`🚀 Сервер запущен на порту ${PORT}`);
-      console.log(`📡 Доступен по адресу: http://0.0.0.0:${PORT}`);
-      console.log('🔄 Роуты доступны:');
-      console.log('   GET  /health');
-      console.log('   GET  /users');
-      console.log('   POST /users/register');
-      console.log('   GET  /api/users (legacy)');
-    });
   })
   .catch((err) => {
-    console.error('❌ Критическая ошибка подключения к MongoDB:', err.message);
+    console.error('❌ Ошибка подключения к MongoDB:', err.message);
+    console.error('⚠️ Сервер продолжит работу, но БД недоступна!');
     console.error('💡 Проверьте переменную окружения MONGODB_URI в Render');
-    process.exit(1);
+    // НЕ ЗАВЕРШАЕМ процесс - пусть сервер работает
   });
 
 module.exports = { app, io };
