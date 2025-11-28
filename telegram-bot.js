@@ -118,4 +118,29 @@ bot.on('message', (msg) => {
   }
 });
 
-console.log('🤖 Бот запущен!');
+console.log('🤖 Telegram Bot запущен!');
+console.log(`📱 WebApp URL: ${webAppUrl}`);
+console.log(`🔑 Bot Token: ${token.substring(0, 10)}...`);
+console.log('✅ Бот готов к работе 24/7');
+
+// Обработка ошибок
+bot.on('polling_error', (error) => {
+  console.error('❌ Polling error:', error.code, error.message);
+});
+
+bot.on('error', (error) => {
+  console.error('❌ Bot error:', error);
+});
+
+// Graceful shutdown
+process.on('SIGINT', () => {
+  console.log('\n👋 Останавливаю бота...');
+  bot.stopPolling();
+  process.exit(0);
+});
+
+process.on('SIGTERM', () => {
+  console.log('\n👋 Останавливаю бота...');
+  bot.stopPolling();
+  process.exit(0);
+});
