@@ -2,6 +2,9 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { User, Listing, Chat, Language } from '@/types';
 
+// Версия хранилища - при изменении все пользователи будут разлогинены
+const STORAGE_VERSION = 2; // Увеличили с 1 до 2 для сброса сессий
+
 interface AppState {
   // User
   user: User | null;
@@ -135,6 +138,29 @@ export const useStore = create<AppState>()(
     }),
     {
       name: 'kupyprodai-storage',
+      version: STORAGE_VERSION,
+      // При изменении версии - очищаем все данные
+      migrate: (persistedState: any, version: number) => {
+        if (version !== STORAGE_VERSION) {
+          console.log(`🔄 Версия изменилась (${version} → ${STORAGE_VERSION}), очищаем данные...`);
+          return {
+            user: null,
+            isRegistered: false,
+            language: 'ru',
+            listings: [],
+            favorites: [],
+            chats: [],
+            allUsers: [],
+            filters: {
+              category: 'all',
+              minPrice: null,
+              maxPrice: null,
+              searchQuery: '',
+            },
+          };
+        }
+        return persistedState;
+      },
       // Обработка ошибок переполнения localStorage
       storage: {
         getItem: (name) => {
