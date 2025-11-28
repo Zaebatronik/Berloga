@@ -254,7 +254,7 @@ function App() {
         <div>🐻 Загрузка...</div>
         {isRegistered && !authChecked && (
           <div style={{ fontSize: '14px', opacity: 0.8 }}>
-            Проверка пользователя в базе данных...
+            🔒 ОБЯЗАТЕЛЬНАЯ проверка регистрации в базе...
           </div>
         )}
       </div>
@@ -267,6 +267,23 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="*" element={<BannedPage />} />
+        </Routes>
+      </BrowserRouter>
+    );
+  }
+
+  // 🔒 КРИТИЧНО: Если считается зарегистрированным, но проверка не прошла - НЕ ПУСКАЕМ
+  if (isRegistered && authChecked && !user) {
+    console.error('🚫 БЛОКИРОВКА: Пользователь не найден в базе данных!');
+    return (
+      <BrowserRouter>
+        <Routes>
+          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="/" element={<WelcomePage />} />
+          <Route path="/agreement" element={<AgreementPage />} />
+          <Route path="/location" element={<LocationPage />} />
+          <Route path="/radius" element={<RadiusPage />} />
+          <Route path="/nickname" element={<NicknamePage />} />
         </Routes>
       </BrowserRouter>
     );
