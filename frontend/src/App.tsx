@@ -5,6 +5,36 @@ import { useStore } from './store';
 import { getTelegramId } from './utils/telegram';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
+// КРИТИЧНО: Проверка версии ДО импорта store и загрузки компонентов
+const REQUIRED_VERSION = 3;
+const checkStorageVersion = () => {
+  const storageData = localStorage.getItem('kupyprodai-storage');
+  if (storageData) {
+    try {
+      const parsed = JSON.parse(storageData);
+      const currentVersion = parsed?.state?.version || parsed?.version || 0;
+      
+      if (currentVersion < REQUIRED_VERSION) {
+        console.log(`🔄 Версия устарела (${currentVersion} < ${REQUIRED_VERSION}), очищаем...`);
+        localStorage.clear();
+        window.location.reload();
+        return false;
+      }
+    } catch (e) {
+      console.error('Ошибка проверки версии:', e);
+      localStorage.clear();
+      window.location.reload();
+      return false;
+    }
+  }
+  return true;
+};
+
+// Выполняем проверку сразу при импорте модуля
+if (typeof window !== 'undefined') {
+  checkStorageVersion();
+}
+
 // Pages
 import WelcomePage from './pages/WelcomePage';
 import AgreementPage from './pages/AgreementPage';
@@ -48,27 +78,6 @@ function App() {
       setI18nReady(true);
     };
     initLanguage();
-
-    // Проверка версии хранилища ПЕРЕД автологином
-    const storageVersion = localStorage.getItem('kupyprodai-storage');
-    if (storageVersion) {
-      try {
-        const parsed = JSON.parse(storageVersion);
-        // Если версия < 3, полностью очищаем
-        if (!parsed.version || parsed.version < 3) {
-          console.log('🔄 Обнаружена старая версия хранилища, очищаем все данные...');
-          localStorage.clear();
-          // Перезагружаем страницу для применения изменений
-          window.location.reload();
-          return;
-        }
-      } catch (e) {
-        console.error('Ошибка парсинга версии, очищаем:', e);
-        localStorage.clear();
-        window.location.reload();
-        return;
-      }
-    }
 
     // Автоматический вход по Telegram ID
     const autoLogin = async () => {
