@@ -8,29 +8,41 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 // КРИТИЧНО: Проверка версии ДО импорта store и загрузки компонентов
 const REQUIRED_VERSION = 3;
 const checkStorageVersion = () => {
-  const storageData = localStorage.getItem('kupyprodai-storage');
-  if (storageData) {
-    try {
-      const parsed = JSON.parse(storageData);
-      const currentVersion = parsed?.state?.version || parsed?.version || 0;
-      
-      if (currentVersion < REQUIRED_VERSION) {
-        console.log(`🔄 Версия устарела (${currentVersion} < ${REQUIRED_VERSION}), очищаем...`);
-        localStorage.clear();
-        window.location.reload();
-        return false;
-      }
-    } catch (e) {
-      console.error('Ошибка проверки версии:', e);
+  try {
+    const storageData = localStorage.getItem('kupyprodai-storage');
+    
+    if (!storageData) {
+      console.log('✅ Нет сохраненных данных, продолжаем');
+      return true;
+    }
+    
+    const parsed = JSON.parse(storageData);
+    // Zustand persist хранит версию в корне: {state: {...}, version: N}
+    const currentVersion = parsed.version || 0;
+    
+    console.log(`🔍 Проверка версии: текущая=${currentVersion}, требуется=${REQUIRED_VERSION}`);
+    
+    if (currentVersion < REQUIRED_VERSION) {
+      console.log(`🔄 Версия устарела! Очищаем localStorage и перезагружаем...`);
       localStorage.clear();
-      window.location.reload();
+      sessionStorage.clear();
+      // Принудительная перезагрузка с очисткой кэша
+      window.location.href = window.location.href + '?v=' + Date.now();
       return false;
     }
+    
+    console.log('✅ Версия актуальна');
+    return true;
+  } catch (e) {
+    console.error('❌ Ошибка проверки версии:', e);
+    localStorage.clear();
+    sessionStorage.clear();
+    window.location.href = window.location.href + '?v=' + Date.now();
+    return false;
   }
-  return true;
 };
 
-// Выполняем проверку сразу при импорте модуля
+// Выполняем проверку сразу при импорте модуля (ДО загрузки Zustand!)
 if (typeof window !== 'undefined') {
   checkStorageVersion();
 }
