@@ -4,9 +4,11 @@ import { useTranslation } from 'react-i18next';
 import { useStore } from '../store';
 import { getTelegramId } from '../utils/telegram';
 import { chatsAPI } from '../services/api';
+import { useAuthGuard } from '../hooks/useAuthGuard';
 import '../styles/MainMenu.css';
 
 export default function MainMenu() {
+  useAuthGuard(); // Защита от незарегистрированных
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { user } = useStore();

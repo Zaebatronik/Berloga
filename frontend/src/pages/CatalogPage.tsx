@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useStore } from '../store';
 import { currencyService } from '../services/currency';
 import { locationService } from '../services/location';
+import { useAuthGuard } from '../hooks/useAuthGuard';
 import '../styles/CatalogPage.css';
 
 // Доступные страны (соответствуют языкам)
@@ -42,6 +43,7 @@ const categoryEmojis: Record<string, string> = {
 };
 
 export default function CatalogPage() {
+  useAuthGuard(); // Защита от незарегистрированных
   // Socket.IO live updates
   const socketRef = useRef<Socket | null>(null);
   const { t } = useTranslation();
