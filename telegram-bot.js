@@ -4,7 +4,7 @@ const TelegramBot = require('node-telegram-bot-api');
 
 // Создайте бота с токеном от BotFather
 const token = process.env.TELEGRAM_BOT_TOKEN || 'YOUR_BOT_TOKEN_HERE';
-const webAppUrl = 'https://kupyprodai.pages.dev';
+const webAppUrl = 'https://a8a3ca83.kupyprodai.pages.dev';
 
 const bot = new TelegramBot(token, { polling: true });
 
