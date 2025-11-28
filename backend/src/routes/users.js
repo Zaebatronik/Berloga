@@ -273,4 +273,34 @@ router.post('/:id/unban', verifyTelegramAuth, requireAdmin, async (req, res) => 
   }
 });
 
+// 🚨 УДАЛИТЬ ВСЕХ ПОЛЬЗОВАТЕЛЕЙ (только админ, для сброса базы)
+router.delete('/admin/delete-all-users', verifyTelegramAuth, requireAdmin, async (req, res) => {
+  try {
+    console.log('🚨 ВНИМАНИЕ: Админ запросил удаление ВСЕХ пользователей!');
+    
+    const count = await User.countDocuments();
+    console.log(`📊 Пользователей в базе: ${count}`);
+    
+    if (count === 0) {
+      return res.json({ message: 'База уже пуста', deletedCount: 0 });
+    }
+    
+    const result = await User.deleteMany({});
+    console.log(`✅ Удалено пользователей: ${result.deletedCount}`);
+    
+    // Отправляем Socket.IO событие всем клиентам
+    if (req.app.get('io')) {
+      req.app.get('io').emit('database-reset', { message: 'База пользователей очищена' });
+    }
+    
+    res.json({ 
+      message: 'Все пользователи удалены', 
+      deletedCount: result.deletedCount 
+    });
+  } catch (error) {
+    console.error('❌ Ошибка удаления всех пользователей:', error);
+    res.status(500).json({ message: 'Ошибка сервера', error: error.message });
+  }
+});
+
 module.exports = router;
