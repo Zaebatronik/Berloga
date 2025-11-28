@@ -13,15 +13,11 @@ const api = axios.create({
 
 // Interceptor для добавления Telegram auth data (с проверкой hash на backend)
 api.interceptors.request.use((config) => {
-  // ✅ Отправляем initData с hash для криптографической проверки
+  // ✅ ТОЛЬКО криптографическая проверка через initData
   if (window.Telegram?.WebApp?.initData) {
     config.headers['x-telegram-init-data'] = window.Telegram.WebApp.initData;
-  }
-  // Fallback для dev/testing (незащищённый)
-  else if (window.Telegram?.WebApp?.initDataUnsafe?.user) {
-    config.headers['X-Telegram-User'] = JSON.stringify(
-      window.Telegram.WebApp.initDataUnsafe.user
-    );
+  } else {
+    console.warn('⚠️ Telegram initData отсутствует - запрос будет отклонен');
   }
   console.log('🌐 API Request:', config.method?.toUpperCase(), config.url);
   return config;
