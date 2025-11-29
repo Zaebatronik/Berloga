@@ -1,11 +1,23 @@
 // Простой Telegram бот для команды /start
 require('dotenv').config();
 const TelegramBot = require('node-telegram-bot-api');
+const http = require('http');
 
 const token = process.env.TELEGRAM_BOT_TOKEN || '7939786678:AAHSujmve3UREb9YLpZZWY2fiA00qUj0Fz8';
 const baseUrl = 'https://berloga.pages.dev';
+const PORT = process.env.PORT || 3000;
 
 const bot = new TelegramBot(token, { polling: true });
+
+// HTTP сервер для Render (чтобы не показывал "deploying")
+const server = http.createServer((req, res) => {
+  res.writeHead(200, { 'Content-Type': 'text/plain' });
+  res.end('Berloga Bot is running! 🐻');
+});
+
+server.listen(PORT, () => {
+  console.log(`🌐 HTTP server running on port ${PORT}`);
+});
 
 console.log('🤖 Telegram Bot запущен!');
 console.log(`📱 Base URL: ${baseUrl}`);
