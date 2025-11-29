@@ -5,7 +5,7 @@ import { useStore } from '../store';
 import { io, Socket } from 'socket.io-client';
 import { chatsAPI, listingsAPI } from '../services/api';
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://berloga-backend.onrender.com';
+const API_URL = import.meta.env.VITE_API_URL || 'https://berloga.onrender.com';
 let socket: Socket | null = null;
 
 interface Message {
