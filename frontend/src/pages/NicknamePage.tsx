@@ -68,13 +68,21 @@ export default function NicknamePage() {
       let telegramId: string;
       let telegramUsername = '';
       
+      // 🐛 DEBUG: Проверяем Telegram WebApp
+      console.log('🔍 DEBUG: window.Telegram:', window.Telegram);
+      console.log('🔍 DEBUG: WebApp:', window.Telegram?.WebApp);
+      console.log('🔍 DEBUG: initDataUnsafe:', window.Telegram?.WebApp?.initDataUnsafe);
+      console.log('🔍 DEBUG: user:', window.Telegram?.WebApp?.initDataUnsafe?.user);
+      
       try {
         telegramId = getTelegramId();
         telegramUsername = getTelegramUsername();
+        console.log('✅ Telegram ID получен:', telegramId);
       } catch (error: any) {
+        console.error('❌ Ошибка получения Telegram ID:', error);
         if (error.message === 'NOT_AUTHENTICATED') {
           // Пользователь не авторизован через Telegram
-          setError('❌ Приложение должно быть запущено через Telegram бота!');
+          setError('❌ Приложение должно быть запущено через Telegram бота! Откройте через @Kupyiprodaybot');
           setLoading(false);
           return;
         }
