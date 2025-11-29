@@ -1,7 +1,7 @@
 {
-  "name": "kupyprodai-telegram-bot",
-  "version": "1.0.0",
-  "description": "Telegram bot for KupyProdai marketplace",
+  "name": "berloga-telegram-bot",
+  "version": "2.0.0",
+  "description": "Telegram bot for Berloga marketplace",
   "main": "telegram-bot.js",
   "scripts": {
     "start": "node telegram-bot.js"
